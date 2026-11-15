@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-import json, os, sys, calendar, csv, shutil
+import json, os, sys, calendar, csv, shutil, uuid
 from datetime import datetime, timedelta
 
 from themes_data import THEMES
@@ -50,6 +50,19 @@ def set_window_icon(root):
 
 WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"]
 
+NAV_GROUPS = [
+    ("日常", [("🏠", "首页", "home"), ("📅", "今日安排", "today"), ("✅", "待办事项", "todos"),
+              ("⏰", "定时提醒", "reminders"), ("🗓️", "日历记录", "calendar")]),
+    ("工作", [("📋", "项目清单", "projects"), ("💡", "素材库", "material"),
+              ("📱", "自媒体", "publish")]),
+    ("学习成长", [("📚", "学习清单", "study"), ("📖", "书单", "books"), ("🌱", "习惯打卡", "habits")]),
+    ("健康", [("⚖️", "减肥记录", "weight"), ("💄", "医美清单", "beauty")]),
+    ("规划", [("📆", "周计划", "weekplan"), ("🔁", "周期任务", "recurring"),
+              ("⏳", "倒计时", "countdown"), ("🎯", "每月目标", "goal")]),
+    ("其他", [("📝", "随笔备忘", "notes"), ("🔍", "全局搜索", "search"), ("⚙️", "设置", "settings")]),
+]
+NAV_FLAT = [it for _, items in NAV_GROUPS for it in items]
+
 if getattr(sys, "frozen", False):
     BASE_DIR = os.path.dirname(sys.executable)
 else:
@@ -95,6 +108,15 @@ def default_data():
             for n in ["会计", "审计", "财务成本管理", "公司战略与风险管理", "经济法", "税法"]
         ],
         "study_log": [],
+        "study_cats": ["CPA专业", "AI", "医学健康", "育儿", "玄学", "理财", "心理成长", "生活美学", "其他"],
+        "study_items": [
+            {"id": "cpa1", "name": "会计", "cat": "CPA专业", "status": "想学", "note": ""},
+            {"id": "cpa2", "name": "审计", "cat": "CPA专业", "status": "想学", "note": ""},
+            {"id": "cpa3", "name": "财务成本管理", "cat": "CPA专业", "status": "想学", "note": ""},
+            {"id": "cpa4", "name": "公司战略与风险管理", "cat": "CPA专业", "status": "想学", "note": ""},
+            {"id": "cpa5", "name": "经济法", "cat": "CPA专业", "status": "想学", "note": ""},
+            {"id": "cpa6", "name": "税法", "cat": "CPA专业", "status": "想学", "note": ""},
+        ],
         "books": [],
         "habits": ["普拉提", "早睡", "饮水", "学习", "写日记", "少糖少碳水"],
         "habit_done": {},
@@ -103,6 +125,7 @@ def default_data():
         "moods": {},
         "materials": [],
         "publish": {},
+        "projects": [],
         "weekly_review": {"good": "", "bad": "", "plan": ""},
         "monthly_goal": "",
         "notes": "",
@@ -135,6 +158,9 @@ class App:
         self.pomo_running = False
         self.pomo_left = 25 * 60
         self.current = "home"
+        self.proj_filter = "全部"
+        self.proj_open = set()
+        self.proj_entries = {}
         self.load()
         apply_theme(C, self.data.get("settings", {}).get("theme", "morandi_blue"))
         root.configure(bg=C["bg"])
@@ -275,33 +301,31 @@ class App:
                           lambda e: self.nav_can.itemconfigure(self.nav_win, width=e.width))
 
         self.btns = {}
-        groups = [
-            ("今日", [("🏠 首页", "home"), ("📅 今日安排", "today"),
-                      ("✅ 待办事项", "todos"), ("🗓️ 日历记录", "calendar"),
-                      ("⏰ 定时提醒", "reminders")]),
-            ("规划", [("📆 周计划", "weekplan"), ("🔁 周期任务", "recurring"),
-                      ("⏳ 倒计时", "countdown"), ("🎯 每月目标", "goal")]),
-            ("健康", [("⚖️ 减肥记录", "weight"), ("💄 医美清单", "beauty"),
-                      ("🌱 习惯打卡", "habits"), ("⏱️ 学习番茄", "study")]),
-            ("成长", [("📚 书单", "books"), ("🎓 CPA 科目", "cpa"),
-                      ("💡 素材库", "material"), ("📱 自媒体", "publish")]),
-            ("其他", [("✅ 待办事项", "todos"), ("📝 随笔备忘", "notes"),
-                      ("🔍 全局搜索", "search"), ("⚙️ 设置", "settings")]),
-        ]
-        for gname, items in groups:
+        for gname, items in NAV_GROUPS:
             tk.Label(self.nav_inner, text=gname, bg=C["soft"], fg=C["muted"],
-                     font=("Microsoft YaHei", 8, "bold"), anchor="w", padx=10, pady=1).pack(fill="x")
-            for text, k in items:
-                b = tk.Button(self.nav_inner, text=text, bg=C["card"], fg=C["text"], bd=0,
-                              relief="flat", anchor="w", padx=12, pady=3,
+                     font=("Microsoft YaHei", 8, "bold"), anchor="w", padx=12, pady=2).pack(fill="x")
+            for icon, text, k in items:
+                row = tk.Frame(self.nav_inner, bg=C["card"])
+                row.pack(fill="x", padx=4)
+                acc = tk.Frame(row, bg=C["card"], width=3)
+                acc.pack(side="left", fill="y")
+                ic = tk.Label(row, text=icon, bg=C["card"], width=3,
+                              font=("Microsoft YaHei", 10), anchor="center")
+                ic.pack(side="left")
+                b = tk.Button(row, text=text, bg=C["card"], fg=C["text"], bd=0,
+                              relief="flat", anchor="w", padx=2, pady=5,
                               activebackground=C["light"],
                               font=("Microsoft YaHei", 9),
                               command=lambda k=k: self.show(k))
-                b.pack(fill="x", pady=1, padx=4)
-                self.btns[k] = b
+                b.pack(side="left", fill="x", expand=True)
+                self.btns[k] = (b, acc, ic)
         # 让滚轮在侧栏里滚菜单，不带动右侧内容
         for w in [self.nav_can, self.nav_inner] + self.nav_inner.winfo_children():
             w.bind("<MouseWheel>", self.nav_wheel)
+        try:
+            self.update_proj_badge()
+        except Exception:
+            pass
 
     def nav_wheel(self, e):
         try:
@@ -369,17 +393,21 @@ class App:
         titles = {
             "home": "首页", "today": "今日安排", "calendar": "日历记录",
             "reminders": "定时提醒", "weekplan": "周计划", "recurring": "周期任务",
-            "countdown": "倒计时", "goal": "每月目标",
+            "countdown": "倒计时", "goal": "每月目标", "projects": "项目清单",
             "weight": "减肥记录", "beauty": "医美清单", "habits": "习惯打卡",
-            "study": "学习番茄", "books": "书单", "cpa": "CPA 科目",
+            "study": "学习清单", "books": "书单",
             "material": "素材库",
             "publish": "自媒体", "todos": "待办事项", "notes": "随笔备忘",
             "search": "全局搜索", "settings": "设置",
         }
         self.title(titles[k])
-        for kk, b in self.btns.items():
-            b.config(bg=C["main"] if kk == k else C["card"],
-                     fg="white" if kk == k else C["text"])
+        for kk, (b, acc, ic) in self.btns.items():
+            on = (kk == k)
+            b.config(bg=C["light"] if on else C["card"],
+                     fg=C["dark"] if on else C["text"],
+                     font=("Microsoft YaHei", 9, "bold") if on else ("Microsoft YaHei", 9))
+            acc.config(bg=C["main"] if on else C["card"])
+            ic.config(bg=C["light"] if on else C["card"])
         getattr(self, "p_" + k)()
 
     def set_theme(self, key):
@@ -407,8 +435,8 @@ class App:
         f.pack(fill="x", padx=18, pady=7)
         if t:
             tk.Label(f, text=t, bg=C["light"], fg=C["dark"], anchor="w",
-                     font=("Microsoft YaHei", 11, "bold"), padx=14, pady=6).pack(fill="x")
-            inner = tk.Frame(f, bg=C["card"], padx=10, pady=8)
+                     font=("Microsoft YaHei", 11, "bold"), padx=14, pady=8).pack(fill="x")
+            inner = tk.Frame(f, bg=C["card"], padx=14, pady=12)
             inner.pack(fill="x")
             return inner
         return f
@@ -421,15 +449,87 @@ class App:
 
     def link(self, parent, text, cmd):
         b = tk.Button(parent, text=text, bg=C["light"], fg=C["dark"], bd=0,
-                      padx=10, pady=3, font=("Microsoft YaHei", 9), command=cmd)
+                      padx=12, pady=6, font=("Microsoft YaHei", 9), command=cmd,
+                      activebackground=tint(C["main"], 0.3), cursor="hand2")
         b.pack(side="left", padx=4)
         return b
 
     def primary(self, parent, text, cmd):
         b = tk.Button(parent, text=text, bg=C["main"], fg="white", bd=0,
-                      padx=14, pady=3, font=("Microsoft YaHei", 9), command=cmd)
+                      padx=16, pady=6, font=("Microsoft YaHei", 9, "bold"), command=cmd,
+                      activebackground=tint(C["main"], 0.78), cursor="hand2")
         b.pack(side="left", padx=4)
         return b
+
+    def ghost(self, parent, text, cmd):
+        b = tk.Button(parent, text=text, bg=C["card"], fg=C["muted"], bd=0,
+                      padx=10, pady=5, font=("Microsoft YaHei", 9), command=cmd,
+                      activebackground=C["light"], cursor="hand2")
+        b.pack(side="left", padx=3)
+        return b
+
+    def date_pick(self, entry):
+        """弹出小日历，点日期填进输入框"""
+        win = tk.Toplevel(self.root)
+        win.title("选择日期")
+        win.configure(bg=C["card"])
+        win.resizable(False, False)
+        win.transient(self.root)
+        state = {"y": datetime.now().year, "m": datetime.now().month}
+        body = tk.Frame(win, bg=C["card"])
+        body.pack(padx=8, pady=8)
+
+        def move(d):
+            y, m = state["y"], state["m"] + d
+            if m < 1:
+                y, m = y - 1, 12
+            elif m > 12:
+                y, m = y + 1, 1
+            state["y"], state["m"] = y, m
+            draw()
+
+        def draw():
+            for w in body.winfo_children():
+                w.destroy()
+            head = tk.Frame(body, bg=C["card"])
+            head.pack(fill="x", pady=(0, 4))
+            tk.Button(head, text="◀", bg=C["card"], fg=C["muted"], bd=0,
+                      font=("Microsoft YaHei", 10), command=lambda: move(-1)).pack(side="left")
+            tk.Label(head, text=f"{state['y']}年{state['m']}月", bg=C["card"], fg=C["dark"],
+                     font=("Microsoft YaHei", 11, "bold")).pack(side="left", expand=True)
+            tk.Button(head, text="▶", bg=C["card"], fg=C["muted"], bd=0,
+                      font=("Microsoft YaHei", 10), command=lambda: move(1)).pack(side="right")
+            grid = tk.Frame(body, bg=C["card"])
+            grid.pack()
+            for i, h in enumerate(WEEKDAYS):
+                tk.Label(grid, text=h, bg=C["light"], fg=C["dark"], width=4).grid(row=0, column=i)
+            weeks = calendar.Calendar(firstweekday=0).monthdayscalendar(state["y"], state["m"])
+            for r, wk in enumerate(weeks, start=1):
+                for c, d in enumerate(wk):
+                    if d == 0:
+                        tk.Label(grid, text="", bg=C["card"], width=4).grid(row=r, column=c)
+                        continue
+                    ds = f"{state['y']:04d}-{state['m']:02d}-{d:02d}"
+                    b = tk.Button(grid, text=str(d), bg=C["card"], fg=C["text"], bd=0, width=4,
+                                  font=("Microsoft YaHei", 9),
+                                  command=lambda ds=ds: self.pick_date(entry, ds, win))
+                    b.grid(row=r, column=c, pady=1)
+
+        draw()
+
+    def pick_date(self, entry, ds, win):
+        try:
+            entry.delete(0, "end")
+            entry.insert(0, ds)
+        except Exception:
+            pass
+        win.destroy()
+
+    def date_row(self, parent, entry):
+        """日期输入框右边的日历按钮"""
+        tk.Button(parent, text="📅", bg=C["card"], fg=C["muted"], bd=0,
+                  font=("Microsoft YaHei", 10), cursor="hand2",
+                  command=lambda: self.date_pick(entry)).pack(side="left", padx=(4, 0))
 
     # ---------- 首页 ----------
     def p_home(self):
@@ -445,8 +545,10 @@ class App:
         if hol:
             hero_hint = ("今天放假，好好休息 🎉" if hol[1] == "off"
                          else f"今天调休上班，辛苦了（{hol[0]}）")
-        hero = tk.Canvas(self.con, height=124, bg=C["bg"], highlightthickness=0)
+        hero = tk.Canvas(self.con, height=124, bg=C["bg"], highlightthickness=0,
+                         cursor="hand2")
         hero.pack(fill="x", padx=20, pady=(12, 6))
+        hero.bind("<Button-1>", lambda e: self.show("calendar"))
 
         def draw_hero(event=None):
             try:
@@ -507,6 +609,22 @@ class App:
                      font=("Microsoft YaHei", 15, "bold")).pack(pady=(6, 0))
             tk.Label(f, text=name, bg=C["card"], fg=C["muted"],
                      font=("Microsoft YaHei", 8)).pack(pady=(0, 6))
+
+        # 快捷入口
+        quick = self.card("🚀 快捷入口")
+        grid = tk.Frame(quick, bg=C["card"])
+        grid.pack(fill="x")
+        for i, (icon, label, key) in enumerate(NAV_FLAT):
+            grid.columnconfigure(i % 5, weight=1, uniform="q")
+            cell = tk.Frame(grid, bg=C["soft"], highlightbackground=C["border"],
+                            highlightthickness=1, height=64)
+            cell.grid(row=i // 5, column=i % 5, sticky="nsew", padx=4, pady=4)
+            cell.grid_propagate(False)
+            tk.Button(cell, text=icon, bg=C["soft"], bd=0, relief="flat",
+                      font=("Microsoft YaHei", 15), activebackground=C["light"],
+                      cursor="hand2", command=lambda k=key: self.show(k)).pack(pady=(7, 0))
+            tk.Label(cell, text=label, bg=C["soft"], fg=C["text"],
+                     font=("Microsoft YaHei", 8)).pack()
 
         # 今日一句
         inner0 = self.card("📖 今日一句")
@@ -746,7 +864,7 @@ class App:
         self.cal_title.config(text=f"{y}年{m}月")
         for i, h in enumerate(WEEKDAYS):
             tk.Label(self.cal_grid, text=h, bg=C["light"], fg=C["dark"],
-                     width=8, pady=2).grid(row=0, column=i, padx=1, pady=1)
+                     width=6, pady=3).grid(row=0, column=i, padx=1, pady=1)
         weeks = calendar.Calendar(firstweekday=0).monthdayscalendar(y, m)
         logs = self.data.get("daily_logs", {})
         moods = self.data.get("moods", {})
@@ -754,7 +872,7 @@ class App:
         for r, week in enumerate(weeks, start=1):
             for c, day in enumerate(week):
                 if day == 0:
-                    tk.Label(self.cal_grid, text="", bg=C["card"], width=8, height=2).grid(
+                    tk.Label(self.cal_grid, text="", bg=C["card"], width=6, height=2).grid(
                         row=r, column=c, padx=1, pady=1)
                     continue
                 ds = f"{y:04d}-{m:02d}-{day:02d}"
@@ -776,25 +894,29 @@ class App:
                     bg, fg = tint(C["main"], 0.22), C["muted"]
                 else:
                     bg, fg = C["card"], C["text"]
+                # 日期和标记分两格，保证每个格子对齐
+                cell = tk.Frame(self.cal_grid, bg=bg, width=64, height=42)
+                cell.grid(row=r, column=c, padx=1, pady=1)
+                cell.pack_propagate(False)
+                num = tk.Label(cell, text=str(day), bg=bg, fg=fg, width=3,
+                               font=("Microsoft YaHei", 11, "bold" if sel else "normal"))
+                num.pack(side="left", padx=(4, 0))
                 mark = ""
-                if has:
-                    mark += " ●"
                 if hol:
-                    mark += " 休" if hol[1] == "off" else " 班"
+                    mark = "休" if hol[1] == "off" else "班"
+                elif has:
+                    mark = "●"
                 if ds == today:
-                    mark += " 今"
-                b = tk.Button(self.cal_grid, text=str(day) + mark, bg=bg, fg=fg, bd=0,
-                              width=8, height=2, font=("Microsoft YaHei", 9),
-                              command=lambda ds=ds: self.cal_pick(ds))
-                b.grid(row=r, column=c, padx=1, pady=1)
+                    mark = "今"
+                tk.Label(cell, text=mark, bg=bg, fg=fg, width=2,
+                         font=("Microsoft YaHei", 8)).pack(side="left")
+                for w in cell.winfo_children():
+                    w.bind("<Button-1>", lambda e, ds=ds: self.cal_pick(ds))
+                cell.bind("<Button-1>", lambda e, ds=ds: self.cal_pick(ds))
         legend = tk.Frame(self.cal_grid, bg=C["card"])
-        legend.grid(row=len(weeks) + 1, column=0, columnspan=7, sticky="w", pady=(6, 0))
-        tk.Label(legend, text="休 = 法定假日（可休假）　班 = 调休上班", bg=C["card"], fg=C["muted"],
+        legend.grid(row=len(weeks) + 1, column=0, columnspan=7, sticky="w", pady=(8, 0))
+        tk.Label(legend, text="休=法定假日　班=调休上班　●=有记录　今=今天", bg=C["card"], fg=C["muted"],
                  font=("Microsoft YaHei", 8)).pack(side="left")
-        for name, col in [("放假", C["hol"]), ("调休上班", C["work"])]:
-            tk.Label(legend, text="  " + name + " ", bg=col,
-                     fg="white" if col == C["work"] else C["dark"],
-                     font=("Microsoft YaHei", 8)).pack(side="left", padx=2)
 
     def cal_move(self, delta):
         y, m = self.cal_year, self.cal_month + delta
@@ -896,6 +1018,7 @@ class App:
                                    width=7, state="readonly"); self.rm_rep.set("每天"); self.rm_rep.pack(side="left", padx=4)
         tk.Label(r, text="日期:", bg=C["card"]).pack(side="left", padx=(8, 0))
         self.rm_date = tk.Entry(r, width=10); self.rm_date.insert(0, today_str()); self.rm_date.pack(side="left", padx=4)
+        self.date_row(r, self.rm_date)
         self.primary(r, "添加", self.add_reminder)
 
         inner2 = self.card("提醒列表")
@@ -1239,6 +1362,242 @@ class App:
         start = now - timedelta(days=now.weekday())
         return start, now
 
+    # ---------- 项目清单 ----------
+    def proj_color(self, status):
+        return {"进行中": C["main"], "未开始": C["muted"], "已完成": "#7FA98A",
+                "暂停": "#C9A87C"}.get(status, C["main"])
+
+    def p_projects(self):
+        bar = tk.Frame(self.con, bg=C["bg"])
+        bar.pack(fill="x", padx=18, pady=(10, 2))
+        for st in ["全部", "进行中", "未开始", "已完成", "暂停"]:
+            on = (st == self.proj_filter)
+            tk.Button(bar, text=st, bg=C["main"] if on else C["card"],
+                      fg="white" if on else C["muted"], bd=0, relief="flat",
+                      font=("Microsoft YaHei", 9, "bold" if on else "normal"),
+                      activebackground=C["light"], padx=14, pady=6,
+                      command=lambda s=st: self.set_proj_filter(s)).pack(side="left", padx=(0, 6))
+        self.primary(bar, "＋ 新增项目", self.add_project)
+
+        ps = self.data.get("projects", [])
+        running = len([p for p in ps if p.get("status") == "进行中"])
+        tk.Label(bar, text=f"进行中 {running} · 共 {len(ps)} 个", bg=C["bg"], fg=C["muted"],
+                 font=("Microsoft YaHei", 9)).pack(side="right", padx=8)
+        shown = [p for p in ps if self.proj_filter == "全部" or p.get("status") == self.proj_filter]
+        if not shown:
+            inner = self.card("还没有项目")
+            tk.Label(inner, text="点上面的「＋ 新增项目」开始记录。",
+                     bg=C["card"], fg=C["muted"], font=("Microsoft YaHei", 9)).pack(anchor="w")
+            return
+
+        for p in shown:
+            self.render_project(p)
+
+    def set_proj_filter(self, st):
+        self.proj_filter = st
+        self.show("projects")
+
+    def render_project(self, p):
+        pid = p.get("id", "")
+        f = tk.Frame(self.con, bg=C["card"], highlightbackground=C["border"], highlightthickness=1)
+        f.pack(fill="x", padx=18, pady=6)
+
+        head = tk.Frame(f, bg=C["card"])
+        head.pack(fill="x", padx=14, pady=(11, 0))
+        tk.Label(head, text=p.get("name", "未命名项目"), bg=C["card"], fg=C["text"],
+                 anchor="w", font=("Microsoft YaHei", 12, "bold")).pack(side="left")
+        tk.Label(head, text=p.get("status", "进行中"), bg=self.proj_color(p.get("status")),
+                 fg="white", font=("Microsoft YaHei", 8, "bold"), padx=9, pady=3).pack(side="right", padx=(6, 0))
+        tk.Label(head, text=f'{int(p.get("progress", 0))}%', bg=C["card"], fg=C["dark"],
+                 font=("Microsoft YaHei", 12, "bold"), width=5).pack(side="right")
+
+        pct = max(0, min(100, int(p.get("progress", 0) or 0)))
+        barbg = tk.Frame(f, bg=C["light"], height=7)
+        barbg.pack(fill="x", padx=14, pady=(8, 0))
+        barbg.pack_propagate(False)
+        fill = tk.Frame(barbg, bg=self.proj_color(p.get("status")), height=7)
+        fill.place(relx=0, rely=0, relheight=1, relwidth=pct / 100)
+
+        meta = tk.Frame(f, bg=C["card"])
+        meta.pack(fill="x", padx=14, pady=(9, 0))
+        for lab, val in [("负责人", p.get("owner", "")), ("对接人", p.get("contact", "")),
+                         ("截止", p.get("due", "")), ("下一步", p.get("next", ""))]:
+            if not val:
+                continue
+            cell = tk.Frame(meta, bg=C["card"])
+            cell.pack(side="left", padx=(0, 18))
+            tk.Label(cell, text=lab, bg=C["card"], fg=C["muted"],
+                     font=("Microsoft YaHei", 8)).pack(anchor="w")
+            tk.Label(cell, text=val, bg=C["card"], fg=C["text"],
+                     font=("Microsoft YaHei", 9, "bold")).pack(anchor="w")
+        if p.get("note"):
+            tk.Label(f, text=p.get("note", ""), bg=C["card"], fg=C["muted"], anchor="w",
+                     justify="left", wraplength=760, font=("Microsoft YaHei", 8)).pack(fill="x", padx=14, pady=(6, 0))
+
+        # 跟进事项
+        todos = p.get("todos", [])
+        done = len([t for t in todos if t.get("done")])
+        line = tk.Frame(f, bg=C["card"])
+        line.pack(fill="x", padx=14, pady=(9, 0))
+        opened = pid in self.proj_open
+        tk.Button(line, text=("▼" if opened else "▶") + f"  跟进事项 {done}/{len(todos)}",
+                  bg=C["card"], fg=C["dark"], bd=0, relief="flat", anchor="w",
+                  font=("Microsoft YaHei", 9, "bold"), activebackground=C["light"],
+                  command=lambda: self.toggle_proj(pid)).pack(side="left")
+        tk.Button(line, text="编辑", bg=C["card"], fg=C["muted"], bd=0, relief="flat",
+                  font=("Microsoft YaHei", 9), activebackground=C["light"],
+                  command=lambda pp=p: self.edit_project(pp)).pack(side="right")
+        tk.Button(line, text="删除", bg=C["card"], fg=C["muted"], bd=0, relief="flat",
+                  font=("Microsoft YaHei", 9), activebackground=C["light"],
+                  command=lambda pp=p: self.del_project(pp)).pack(side="right", padx=(0, 14))
+
+        if opened:
+            for i, t in enumerate(todos):
+                row = tk.Frame(f, bg=C["card"])
+                row.pack(fill="x", padx=30, pady=1)
+                var = tk.BooleanVar(value=t.get("done", False))
+                tk.Checkbutton(row, variable=var, bg=C["card"], activebackground=C["card"],
+                               command=lambda pid=pid, i=i: self.toggle_proj_todo(pid, i)).pack(side="left")
+                tk.Label(row, text=t.get("text", ""), bg=C["card"],
+                         fg=C["muted"] if t.get("done") else C["text"], anchor="w",
+                         font=("Microsoft YaHei", 9)).pack(side="left", fill="x", expand=True)
+                if t.get("date"):
+                    tk.Label(row, text=t.get("date", ""), bg=C["card"], fg=C["muted"],
+                             font=("Microsoft YaHei", 8)).pack(side="right")
+            addrow = tk.Frame(f, bg=C["card"])
+            addrow.pack(fill="x", padx=30, pady=(4, 10))
+            e = tk.Entry(addrow)
+            e.pack(side="left", fill="x", expand=True, ipady=4)
+            e.bind("<Return>", lambda ev, pid=pid: self.add_proj_todo(pid))
+            self.proj_entries[pid] = e
+            self.primary(addrow, "添加跟进事项",
+                         lambda pid=pid, ent=e: self.add_proj_todo(pid, ent))
+        else:
+            tk.Frame(f, bg=C["card"], height=10).pack()
+
+    def toggle_proj(self, pid):
+        if pid in self.proj_open:
+            self.proj_open.discard(pid)
+        else:
+            self.proj_open.add(pid)
+        self.show("projects")
+
+    def find_proj(self, pid):
+        for p in self.data.get("projects", []):
+            if p.get("id") == pid:
+                return p
+        return None
+
+    def toggle_proj_todo(self, pid, i):
+        p = self.find_proj(pid)
+        if p and i < len(p.get("todos", [])):
+            p["todos"][i]["done"] = not p["todos"][i].get("done", False)
+            self.save()
+            self.show("projects")
+
+    def add_proj_todo(self, pid, ent=None):
+        p = self.find_proj(pid)
+        if not p:
+            return
+        if ent is None:
+            ent = self.proj_entries.get(pid)
+        if ent is None:
+            return
+        txt = ent.get().strip()
+        if not txt:
+            return
+        p.setdefault("todos", []).append({"text": txt, "done": False, "date": ""})
+        self.save()
+        self.show("projects")
+
+    def del_project(self, p):
+        if messagebox.askyesno("确认", f"删除项目「{p.get('name','')}」？"):
+            self.data["projects"] = [x for x in self.data.get("projects", []) if x.get("id") != p.get("id")]
+            self.save()
+            self.update_proj_badge()
+            self.show("projects")
+
+    def add_project(self):
+        self.project_dialog(None)
+
+    def edit_project(self, p):
+        self.project_dialog(p)
+
+    def project_dialog(self, p):
+        new = p is None
+        win = tk.Toplevel(self.root)
+        win.title("新增项目" if new else "编辑项目")
+        win.configure(bg=C["card"])
+        win.geometry("520x520")
+        win.transient(self.root)
+
+        def field(label, key, width=26, default=""):
+            tk.Label(win, text=label, bg=C["card"], fg=C["muted"],
+                     font=("Microsoft YaHei", 9)).pack(anchor="w", padx=22, pady=(10, 1))
+            e = tk.Entry(win, width=width)
+            e.insert(0, p.get(key, default) if p else default)
+            e.pack(fill="x", padx=22)
+            return e
+
+        name_e = field("项目名称", "name")
+        st_var = tk.StringVar(value=(p.get("status", "进行中") if p else "进行中"))
+        tk.Label(win, text="状态", bg=C["card"], fg=C["muted"],
+                 font=("Microsoft YaHei", 9)).pack(anchor="w", padx=22, pady=(10, 1))
+        ttk.Combobox(win, textvariable=st_var, values=["未开始", "进行中", "已完成", "暂停"],
+                     width=12, state="readonly").pack(anchor="w", padx=22)
+        owner_e = field("负责人（内部）", "owner")
+        contact_e = field("对接人（外部）", "contact")
+        tk.Label(win, text="截止日期", bg=C["card"], fg=C["muted"],
+                 font=("Microsoft YaHei", 9)).pack(anchor="w", padx=22, pady=(10, 1))
+        due_row = tk.Frame(win, bg=C["card"])
+        due_row.pack(fill="x", padx=22)
+        due_e = tk.Entry(due_row, width=26)
+        due_e.insert(0, p.get("due", "") if p else "")
+        due_e.pack(side="left", fill="x", expand=True)
+        self.date_row(due_row, due_e)
+        next_e = field("下一步动作", "next")
+        prog_var = tk.IntVar(value=int(p.get("progress", 0) or 0) if p else 0)
+        tk.Label(win, text="进度 %", bg=C["card"], fg=C["muted"],
+                 font=("Microsoft YaHei", 9)).pack(anchor="w", padx=22, pady=(10, 1))
+        tk.Spinbox(win, from_=0, to=100, increment=5, textvariable=prog_var, width=8).pack(anchor="w", padx=22)
+        tk.Label(win, text="备注", bg=C["card"], fg=C["muted"],
+                 font=("Microsoft YaHei", 9)).pack(anchor="w", padx=22, pady=(10, 1))
+        note_t = tk.Text(win, height=4)
+        note_t.pack(fill="x", padx=22)
+        note_t.insert("1.0", p.get("note", "") if p else "")
+
+        def save():
+            nm = name_e.get().strip()
+            if not nm:
+                messagebox.showwarning("提示", "请填写项目名称", parent=win)
+                return
+            item = p if p else {"id": uuid.uuid4().hex[:8], "todos": []}
+            item.update({
+                "name": nm, "status": st_var.get(), "owner": owner_e.get().strip(),
+                "contact": contact_e.get().strip(), "due": due_e.get().strip(),
+                "next": next_e.get().strip(), "progress": max(0, min(100, prog_var.get())),
+                "note": note_t.get("1.0", "end-1c").strip(),
+            })
+            if new:
+                self.data.setdefault("projects", []).append(item)
+            self.save()
+            self.update_proj_badge()
+            win.destroy()
+            self.show("projects")
+
+        bar = tk.Frame(win, bg=C["card"])
+        bar.pack(pady=16)
+        tk.Button(bar, text="保存", bg=C["main"], fg="white", bd=0, font=("Microsoft YaHei", 10),
+                  padx=22, pady=6, command=save).pack(side="left", padx=6)
+        tk.Button(bar, text="取消", bg=C["light"], fg=C["dark"], bd=0, font=("Microsoft YaHei", 10),
+                  padx=18, pady=6, command=win.destroy).pack(side="left", padx=6)
+
+    def update_proj_badge(self):
+        # 导航里只写名字，不写数字（数字容易看不懂）
+        item = self.btns.get("projects")
+        if item:
+            item[0].config(text="项目清单")
+
     # ---------- 每月目标 ----------
     def p_goal(self):
         inner = self.card("每月目标")
@@ -1288,6 +1647,7 @@ class App:
         r3 = tk.Frame(inner3, bg=C["card"]); r3.pack(fill="x", pady=3)
         tk.Label(r3, text="日期:", bg=C["card"]).pack(side="left")
         self.wd = tk.Entry(r3, width=11); self.wd.insert(0, today_str()); self.wd.pack(side="left", padx=3)
+        self.date_row(r3, self.wd)
         tk.Label(r3, text="体重:", bg=C["card"]).pack(side="left", padx=(8, 0))
         self.wv = tk.Entry(r3, width=7); self.wv.pack(side="left", padx=3)
         self.primary(r3, "添加", self.add_weight)
@@ -1298,6 +1658,7 @@ class App:
         r4 = tk.Frame(inner4, bg=C["card"]); r4.pack(fill="x", pady=3)
         tk.Label(r4, text="日期:", bg=C["card"]).pack(side="left")
         self.dd = tk.Entry(r4, width=11); self.dd.insert(0, today_str()); self.dd.pack(side="left", padx=3)
+        self.date_row(r4, self.dd)
         tk.Label(r4, text="餐次:", bg=C["card"]).pack(side="left", padx=(8, 0))
         self.dm = tk.Entry(r4, width=6); self.dm.insert(0, "早餐"); self.dm.pack(side="left", padx=3)
         tk.Label(r4, text="内容:", bg=C["card"]).pack(side="left", padx=(8, 0))
@@ -1451,6 +1812,7 @@ class App:
         self.bn = tk.Entry(r, width=12); self.bn.pack(side="left", padx=3)
         tk.Label(r, text="日期:", bg=C["card"]).pack(side="left", padx=(8, 0))
         self.bd = tk.Entry(r, width=11); self.bd.insert(0, today_str()); self.bd.pack(side="left", padx=3)
+        self.date_row(r, self.bd)
         tk.Label(r, text="费用:", bg=C["card"]).pack(side="left", padx=(8, 0))
         self.bc = tk.Entry(r, width=8); self.bc.pack(side="left", padx=3)
         tk.Label(r, text="备注:", bg=C["card"]).pack(side="left", padx=(8, 0))
@@ -1487,34 +1849,6 @@ class App:
             tk.Button(row, text="删除", bg=C["border"], bd=0,
                       command=lambda i=len(self.data["medical_beauty"]) - 1 - i: self.del_beauty(i)).pack(side="right", padx=5)
 
-    # ---------- CPA科目 ----------
-    def p_cpa(self):
-        inner = self.card("CPA科目与学时")
-        mins = {}
-        for x in self.data.get("study_log", []):
-            mins[x.get("subject", "其他")] = mins.get(x.get("subject", "其他"), 0) + int(x.get("minutes", 0))
-        self.cpa_vars = []
-        for sub in self.data["cpa_subjects"]:
-            row = tk.Frame(inner, bg=C["card"], highlightbackground=C["border"], highlightthickness=1)
-            row.pack(fill="x", pady=2)
-            tk.Label(row, text=sub["name"], bg=C["card"], width=18, anchor="w").pack(side="left", padx=6)
-            var = tk.StringVar(value=sub["status"])
-            ttk.Combobox(row, textvariable=var, values=["未报名", "已报名", "已通过", "已过期"],
-                         width=9, state="readonly").pack(side="left", padx=4)
-            tk.Label(row, text=f'累计 {mins.get(sub["name"], 0)} 分钟', bg=C["card"],
-                     fg=C["muted"], width=14).pack(side="left")
-            tk.Label(row, text="备注:", bg=C["card"]).pack(side="left", padx=(6, 0))
-            en = tk.Entry(row, width=18); en.insert(0, sub.get("note", "")); en.pack(side="left", padx=4)
-            self.cpa_vars.append((sub, var, en))
-        self.primary(inner, "保存科目", self.save_cpa)
-
-    def save_cpa(self):
-        for sub, var, en in self.cpa_vars:
-            sub["status"] = var.get()
-            sub["note"] = en.get()
-        self.save()
-        messagebox.showinfo("提示", "CPA科目已保存")
-
     # ---------- 习惯打卡（连续天数 + 热力图） ----------
     def habit_streak(self, h):
         n = 0
@@ -1531,31 +1865,41 @@ class App:
     def p_habits(self):
         today = today_str()
         done = set(self.data.get("habit_done", {}).get(today, []))
-        inner = self.card("今日打卡")
-        grid = tk.Frame(inner, bg=C["card"]); grid.pack(pady=6)
-        for i, h in enumerate(self.data.get("habits", [])):
-            c = tk.Frame(grid, bg=C["light"], highlightbackground=C["border"],
-                         highlightthickness=1, width=150, height=92)
-            c.grid(row=i // 4, column=i % 4, padx=6, pady=6)
-            c.grid_propagate(False)
-            d = h in done
-            tk.Button(c, text="✓" if d else "○", font=("Microsoft YaHei", 18),
-                      bg=C["main"] if d else tint(C["main"], 0.42), fg="white" if d else C["dark"],
-                      bd=0, width=3, command=lambda hh=h: self.toggle_habit(hh)).pack(pady=(8, 0))
-            tk.Label(c, text=h, bg=C["light"], fg=C["dark"],
-                     font=("Microsoft YaHei", 10, "bold")).pack()
-            tk.Label(c, text=f"连续 {self.habit_streak(h)} 天", bg=C["light"], fg=C["muted"],
-                     font=("Microsoft YaHei", 8)).pack()
+        habits = self.data.get("habits", [])
+        n_done = len([h for h in habits if h in done])
+        inner = self.card(f"今日打卡　{n_done}/{len(habits)}")
+        for h in habits:
+            on = h in done
+            rbg = C["light"] if on else C["soft"]
+            row = tk.Frame(inner, bg=rbg, highlightbackground=C["border"], highlightthickness=1)
+            row.pack(fill="x", pady=3)
+            box = tk.Label(row, text="✓" if on else "", bg=C["main"] if on else C["card"],
+                           fg="white" if on else C["muted"], width=2,
+                           font=("Microsoft YaHei", 12, "bold"))
+            box.pack(side="left", padx=(10, 10), pady=9)
+            name = tk.Label(row, text=h, bg=rbg, fg=C["dark"] if on else C["text"],
+                            font=("Microsoft YaHei", 11, "bold" if on else "normal"), anchor="w")
+            name.pack(side="left", fill="x", expand=True)
+            st = tk.Label(row, text=f"连续 {self.habit_streak(h)} 天", bg=rbg, fg=C["muted"],
+                          font=("Microsoft YaHei", 8))
+            st.pack(side="right", padx=12)
+            for w in (row, box, name, st):
+                w.bind("<Button-1>", lambda e, hh=h: self.toggle_habit(hh))
+                try:
+                    w.config(cursor="hand2")
+                except Exception:
+                    pass
 
-        ar = tk.Frame(inner, bg=C["card"]); ar.pack(fill="x", pady=4)
-        tk.Label(ar, text="新习惯:", bg=C["card"]).pack(side="left")
-        self.nh = tk.Entry(ar, width=12); self.nh.pack(side="left", padx=4)
+        ar = tk.Frame(inner, bg=C["card"]); ar.pack(fill="x", pady=(10, 0))
+        tk.Label(ar, text="新习惯", bg=C["card"], fg=C["muted"],
+                 font=("Microsoft YaHei", 9)).pack(side="left", padx=(0, 6))
+        self.nh = tk.Entry(ar, width=14); self.nh.pack(side="left", padx=2, ipady=3)
         self.primary(ar, "添加", self.add_habit)
-        self.link(ar, "删除习惯", self.remove_habit)
+        self.ghost(ar, "删除习惯", self.remove_habit)
 
-        inner2 = self.card("最近 8 周打卡热力图")
-        cv = tk.Canvas(inner2, width=620, height=150, bg="white",
-                       highlightthickness=1, highlightbackground=C["border"])
+        inner2 = self.card("最近 16 周打卡热力图")
+        cv = tk.Canvas(inner2, width=620, height=248, bg=C["card"],
+                       highlightthickness=0)
         cv.pack(pady=4)
         self.draw_heatmap(cv)
 
@@ -1606,12 +1950,14 @@ class App:
             cv.create_text(310, 75, text="暂无习惯", fill=C["muted"])
             return
         total = len(habits)
-        cell = 15
-        x0, y0 = 42, 12
+        cell, gap = 26, 4
+        weeks = 16
+        x0, y0 = 44, 14
         today = datetime.now().date()
-        start = today - timedelta(days=55)
+        monday = today - timedelta(days=today.weekday())
+        start = monday - timedelta(days=(weeks - 1) * 7)
         done_map = self.data.get("habit_done", {})
-        for w in range(8):
+        for w in range(weeks):
             for d in range(7):
                 day = start + timedelta(days=w * 7 + d)
                 if day > today:
@@ -1628,35 +1974,70 @@ class App:
                     color = tint(C["main"], 0.72)
                 else:
                     color = C["main"]
-                x = x0 + w * (cell + 2)
-                y = y0 + d * (cell + 2)
-                cv.create_rectangle(x, y, x + cell, y + cell, fill=color, outline="white")
+                x = x0 + w * (cell + gap)
+                y = y0 + d * (cell + gap)
+                cv.create_rectangle(x, y, x + cell, y + cell, fill=color, outline=C["card"])
         for d, name in enumerate(WEEKDAYS):
-            cv.create_text(30, y0 + d * (cell + 2) + cell / 2, text=name, fill=C["muted"],
+            cv.create_text(26, y0 + d * (cell + gap) + cell / 2, text=name, fill=C["muted"],
                            font=("Microsoft YaHei", 8))
-        cv.create_text(x0, y0 + 7 * (cell + 2) + 8,
-                       text="颜色越深表示当天完成习惯越多", fill=C["muted"],
+        cv.create_text(x0, y0 + 7 * (cell + gap) + 6,
+                       text="颜色越深，当天完成的习惯越多", fill=C["muted"],
                        font=("Microsoft YaHei", 8), anchor="w")
 
     # ---------- 学习番茄 ----------
     def p_study(self):
-        inner = self.card("番茄钟")
+        # ---- 分类学习清单 ----
+        cats = self.data.get("study_cats", [])
+        items = self.data.get("study_items", [])
+        head = tk.Frame(self.con, bg=C["bg"])
+        head.pack(fill="x", padx=18, pady=(10, 2))
+        self.primary(head, "＋ 添加学习条目", self.add_study_item)
+        self.link(head, "＋ 新建分类", self.add_study_cat)
+
+        for cat in cats:
+            sub = [i for i in items if i.get("cat") == cat]
+            inner = self.card(f"📂 {cat}　{len(sub)} 项")
+            if not sub:
+                tk.Label(inner, text="空", bg=C["card"], fg=C["muted"],
+                         font=("Microsoft YaHei", 9)).pack(anchor="w")
+            for it in sub:
+                row = tk.Frame(inner, bg=C["card"])
+                row.pack(fill="x", pady=3)
+                col = {"想学": C["muted"], "在学": C["main"], "已学": "#7FA98A"}.get(it.get("status"), C["muted"])
+                tk.Label(row, text=it.get("status", "想学"), bg=C["light"], fg=col,
+                         font=("Microsoft YaHei", 8, "bold"), padx=8, pady=2).pack(side="left")
+                tk.Label(row, text=it.get("name", ""), bg=C["card"], fg=C["text"], anchor="w",
+                         font=("Microsoft YaHei", 10)).pack(side="left", fill="x", expand=True, padx=8)
+                mins = self.study_minutes_of(it.get("name", ""))
+                if mins:
+                    tk.Label(row, text=f"{mins} 分钟", bg=C["card"], fg=C["muted"],
+                             font=("Microsoft YaHei", 8)).pack(side="right", padx=4)
+                self.ghost(row, "改", lambda it=it: self.edit_study_item(it))
+                self.ghost(row, "删", lambda it=it: self.del_study_item(it))
+
+        # ---- 番茄钟 ----
+        inner = self.card("⏱️ 番茄钟")
         r = tk.Frame(inner, bg=C["card"]); r.pack(fill="x", pady=4)
-        tk.Label(r, text="科目:", bg=C["card"]).pack(side="left")
-        self.st_sub = ttk.Combobox(r, values=[s["name"] for s in self.data.get("cpa_subjects", [])] + ["其他"],
-                                   width=14, state="readonly")
-        self.st_sub.set("会计")
+        names = [s["name"] for s in self.data.get("cpa_subjects", [])] + \
+                [i.get("name", "") for i in items] + ["其他"]
+        names = [n for n in dict.fromkeys(names) if n]
+        tk.Label(r, text="学习内容:", bg=C["card"], fg=C["muted"],
+                 font=("Microsoft YaHei", 9)).pack(side="left")
+        self.st_sub = ttk.Combobox(r, values=names, width=16, state="readonly")
+        self.st_sub.set(names[0] if names else "其他")
         self.st_sub.pack(side="left", padx=6)
-        tk.Label(r, text="时长(分钟):", bg=C["card"]).pack(side="left", padx=(10, 0))
+        tk.Label(r, text="时长:", bg=C["card"], fg=C["muted"],
+                 font=("Microsoft YaHei", 9)).pack(side="left", padx=(10, 0))
         self.st_min = tk.Entry(r, width=5); self.st_min.insert(0, "25"); self.st_min.pack(side="left", padx=4)
         self.st_label = tk.Label(inner, text="25:00", bg=C["card"], fg=C["dark"],
                                  font=("Consolas", 34, "bold"))
-        self.st_label.pack(pady=8)
+        self.st_label.pack(pady=6)
         bar = tk.Frame(inner, bg=C["card"]); bar.pack(pady=4)
         self.primary(bar, "开始", self.start_pomo)
         self.link(bar, "暂停", self.pause_pomo)
         self.link(bar, "重置", self.reset_pomo)
 
+        # ---- 统计 ----
         inner2 = self.card("学习统计")
         stats = tk.Frame(inner2, bg=C["card"]); stats.pack(fill="x")
         start, end = self.week_range()
@@ -1665,15 +2046,120 @@ class App:
         logs = self.data.get("study_log", [])
         wk = sum(int(x.get("minutes", 0)) for x in logs if s_s <= x.get("date", "") <= e_s)
         mo = sum(int(x.get("minutes", 0)) for x in logs if str(x.get("date", "")).startswith(month))
-        tk.Label(stats, text=f"本周 {wk} 分钟（约 {wk/60:.1f} 小时） ｜ 本月 {mo} 分钟（约 {mo/60:.1f} 小时）",
+        tk.Label(stats, text=f"本周 {wk} 分钟（约 {wk/60:.1f} 小时）　｜　本月 {mo} 分钟（约 {mo/60:.1f} 小时）",
                  bg=C["card"], fg=C["dark"], font=("Microsoft YaHei", 10, "bold")).pack(anchor="w", pady=3)
         by = {}
         for x in logs:
             if str(x.get("date", "")).startswith(month):
-                by[x.get("subject", "其他")] = by.get(x.get("subject", "其他"), 0) + int(x.get("minutes", 0))
-        for k, v in sorted(by.items(), key=lambda kv: -kv[1]):
-            tk.Label(stats, text=f"· {k}：{v} 分钟", bg=C["card"], fg=C["text"]).pack(anchor="w")
+                k = x.get("cat") or x.get("subject", "其他")
+                by[k] = by.get(k, 0) + int(x.get("minutes", 0))
+        if by:
+            for k, v in sorted(by.items(), key=lambda kv: -kv[1]):
+                tk.Label(stats, text=f"· {k}：{v} 分钟", bg=C["card"], fg=C["text"]).pack(anchor="w")
+        else:
+            tk.Label(stats, text="本月还没有学习记录", bg=C["card"], fg=C["muted"]).pack(anchor="w")
         self.primary(inner2, "手动记一笔", self.manual_study)
+
+    def study_minutes_of(self, name):
+        return sum(int(x.get("minutes", 0)) for x in self.data.get("study_log", [])
+                   if x.get("subject") == name)
+
+    def study_cat_of(self, name):
+        for i in self.data.get("study_items", []):
+            if i.get("name") == name:
+                return i.get("cat", "其他")
+        for s in self.data.get("cpa_subjects", []):
+            if s.get("name") == name:
+                return "CPA专业"
+        return "其他"
+
+    def add_study_cat(self):
+        win = tk.Toplevel(self.root)
+        win.title("新建分类")
+        win.configure(bg=C["card"])
+        win.geometry("340x150")
+        win.transient(self.root)
+        tk.Label(win, text="分类名称", bg=C["card"], fg=C["muted"],
+                 font=("Microsoft YaHei", 9)).pack(anchor="w", padx=20, pady=(16, 2))
+        e = tk.Entry(win, width=22)
+        e.pack(fill="x", padx=20)
+        e.insert(0, "")
+
+        def ok():
+            t = e.get().strip()
+            if not t:
+                return
+            cats = self.data.setdefault("study_cats", [])
+            if t not in cats:
+                cats.append(t)
+            self.save()
+            win.destroy()
+            self.show("study")
+
+        tk.Button(win, text="添加", bg=C["main"], fg="white", bd=0, font=("Microsoft YaHei", 10),
+                  padx=20, pady=6, command=ok).pack(pady=14)
+
+    def add_study_item(self):
+        self.study_item_dialog(None)
+
+    def edit_study_item(self, it):
+        self.study_item_dialog(it)
+
+    def study_item_dialog(self, it):
+        win = tk.Toplevel(self.root)
+        win.title("学习条目")
+        win.configure(bg=C["card"])
+        win.geometry("440x330")
+        win.transient(self.root)
+        tk.Label(win, text="学习内容", bg=C["card"], fg=C["muted"],
+                 font=("Microsoft YaHei", 9)).pack(anchor="w", padx=22, pady=(16, 2))
+        name_e = tk.Entry(win); name_e.pack(fill="x", padx=22)
+        name_e.insert(0, it.get("name", "") if it else "")
+        tk.Label(win, text="分类", bg=C["card"], fg=C["muted"],
+                 font=("Microsoft YaHei", 9)).pack(anchor="w", padx=22, pady=(12, 2))
+        cat_var = tk.StringVar(value=it.get("cat", "") if it else
+                               (self.data.get("study_cats") or ["其他"])[0])
+        ttk.Combobox(win, textvariable=cat_var, values=self.data.get("study_cats", []) or ["其他"],
+                     width=20, state="readonly").pack(anchor="w", padx=22)
+        tk.Label(win, text="状态", bg=C["card"], fg=C["muted"],
+                 font=("Microsoft YaHei", 9)).pack(anchor="w", padx=22, pady=(12, 2))
+        st_var = tk.StringVar(value=it.get("status", "想学") if it else "想学")
+        ttk.Combobox(win, textvariable=st_var, values=["想学", "在学", "已学"],
+                     width=12, state="readonly").pack(anchor="w", padx=22)
+        tk.Label(win, text="备注", bg=C["card"], fg=C["muted"],
+                 font=("Microsoft YaHei", 9)).pack(anchor="w", padx=22, pady=(12, 2))
+        note_t = tk.Text(win, height=3)
+        note_t.pack(fill="x", padx=22)
+        note_t.insert("1.0", it.get("note", "") if it else "")
+
+        def ok():
+            n = name_e.get().strip()
+            if not n:
+                messagebox.showwarning("提示", "请填写学习内容", parent=win)
+                return
+            if it:
+                it.update({"name": n, "cat": cat_var.get(), "status": st_var.get(),
+                           "note": note_t.get("1.0", "end-1c").strip()})
+            else:
+                self.data.setdefault("study_items", []).append({
+                    "id": uuid.uuid4().hex[:8], "name": n, "cat": cat_var.get(),
+                    "status": st_var.get(), "note": note_t.get("1.0", "end-1c").strip()})
+            self.save()
+            win.destroy()
+            self.show("study")
+
+        bar = tk.Frame(win, bg=C["card"]); bar.pack(pady=14)
+        tk.Button(bar, text="保存", bg=C["main"], fg="white", bd=0, font=("Microsoft YaHei", 10),
+                  padx=20, pady=6, command=ok).pack(side="left", padx=6)
+        tk.Button(bar, text="取消", bg=C["light"], fg=C["dark"], bd=0, font=("Microsoft YaHei", 10),
+                  padx=18, pady=6, command=win.destroy).pack(side="left", padx=6)
+
+    def del_study_item(self, it):
+        if messagebox.askyesno("确认", f"删除「{it.get('name','')}」？"):
+            self.data["study_items"] = [x for x in self.data.get("study_items", [])
+                                        if x.get("id") != it.get("id")]
+            self.save()
+            self.show("study")
 
     def start_pomo(self):
         if self.pomo_running:
@@ -1709,7 +2195,8 @@ class App:
             except Exception:
                 minutes = 25
             self.data.setdefault("study_log", []).append({
-                "date": today_str(), "subject": self.st_sub.get(), "minutes": minutes
+                "date": today_str(), "subject": self.st_sub.get(), "minutes": minutes,
+                "cat": self.study_cat_of(self.st_sub.get())
             })
             self.save()
             try:
@@ -1731,7 +2218,8 @@ class App:
             messagebox.showwarning("提示", "请填写有效分钟数")
             return
         self.data.setdefault("study_log", []).append({
-            "date": today_str(), "subject": self.st_sub.get(), "minutes": minutes
+            "date": today_str(), "subject": self.st_sub.get(), "minutes": minutes,
+            "cat": self.study_cat_of(self.st_sub.get())
         })
         self.save()
         self.show("study")

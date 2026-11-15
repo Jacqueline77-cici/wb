@@ -1,5 +1,5 @@
 ﻿/* 个人工作台 手机版 - 离线缓存 */
-const CACHE = 'wb-cache-v6';
+const CACHE = 'wb-cache-v7';
 const ASSETS = [
   './',
   './index.html',

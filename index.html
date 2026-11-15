@@ -26,6 +26,8 @@ header{position:sticky;top:0;z-index:10;background:var(--bg);padding:8px 18px 6p
   padding-top:calc(8px + env(safe-area-inset-top));max-width:560px;margin:0 auto}
 h1{margin:0;font-size:22px;color:var(--dark);letter-spacing:.5px}
 .sub{color:var(--muted);font-size:12px;margin-top:3px}
+.hrow{display:flex;align-items:flex-start;gap:10px}
+.hrow #back{padding:6px 12px;margin-top:2px;flex:none}
 .motto-line{color:var(--dark);font-size:12px;letter-spacing:1px;margin-top:4px;font-weight:600}
 main{padding:0 14px 12px;max-width:560px;margin:0 auto}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;
@@ -57,6 +59,12 @@ button.mini{padding:5px 10px;font-size:12px;border-radius:8px}
 .chk.on{background:var(--main);border-color:var(--main)}
 .big{font-size:30px;font-weight:700;color:var(--dark);font-family:-apple-system,"PingFang SC"}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.qgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.qcell{background:var(--soft);border-radius:12px;padding:12px 4px;text-align:center;
+  border:1px solid var(--border)}
+.qcell .ic{font-size:20px;line-height:1.3}
+.qcell .lb{font-size:12px;color:var(--text);margin-top:3px}
+.qcell:active{opacity:.7}
 .habit{background:var(--light);border-radius:12px;padding:10px 6px;text-align:center;
   border:1px solid transparent}
 .habit.on{background:var(--main);border-color:var(--main)}
@@ -65,6 +73,14 @@ button.mini{padding:5px 10px;font-size:12px;border-radius:8px}
 .habit.on .nm,.habit.on .st{color:#fff}
 .habit .mk{font-size:20px;line-height:1;color:#D81B60}
 .habit.on .mk{color:#fff}
+.hitem{display:flex;align-items:center;gap:10px;padding:12px 10px;border-radius:12px;
+  background:var(--soft);border:1px solid var(--border);margin-bottom:8px}
+.hitem.on{background:var(--light);border-color:var(--main)}
+.hitem .box{width:26px;height:26px;border-radius:8px;background:#fff;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;flex:none}
+.hitem.on .box{background:var(--main);border-color:var(--main)}
+.hitem .nm{flex:1;font-size:15px;font-weight:600;color:var(--text)}
+.hitem .st{font-size:11px;color:var(--muted)}
 .cups{display:flex;gap:6px}
 .cup{flex:1;height:34px;border-radius:8px;background:var(--light);border:1px solid transparent;
   display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
@@ -94,9 +110,14 @@ svg.spark{width:100%;height:120px;display:block}
 </head>
 <body>
 <header>
-  <h1 id="htitle">Jacqueline</h1>
-  <div class="sub motto-line">人生，易如反掌</div>
-  <div class="sub" id="hsub"></div>
+  <div class="hrow">
+    <button id="back" onclick="closeSection()" style="display:none">‹ 返回</button>
+    <div>
+      <h1 id="htitle">Jacqueline</h1>
+      <div class="sub motto-line">人生，易如反掌</div>
+      <div class="sub" id="hsub"></div>
+    </div>
+  </div>
 </header>
 <main id="app"></main>
 <nav class="tabs" id="tabs">
@@ -141,6 +162,9 @@ function defaults(){
       .map(n => ({name:n,status:'未报名',note:''})),
     habits:['普拉提','早睡','饮水','学习','写日记','少糖少碳水'],
     habit_done:{}, todos:[], daily_logs:{}, moods:{}, materials:[], publish:{},
+    projects:[], study_log:[],
+    study_cats:['CPA专业','AI','医学健康','育儿','玄学','理财','心理成长','生活美学','其他'],
+    study_items:[],
     weekly_review:{good:'',bad:'',plan:''}, monthly_goal:'', notes:'', reminders:[]
   };
 }
@@ -755,11 +779,15 @@ function title(){
     todos:['待办事项','做完一件划掉一件'],
     me:['我的','记录 · 提醒 · 数据']
   };
-  const [h, s] = map[tab];
+  const [h, s] = section === 'projects' ? ['项目清单','进度 · 跟进事项 · 对接人']
+              : section === 'study' ? ['学习清单','想学的都在这儿']
+              : map[tab];
   document.getElementById('htitle').textContent = h;
   document.getElementById('hsub').textContent = s;
+  const back = document.getElementById('back');
+  if(back) back.style.display = section ? 'inline-block' : 'none';
   [...document.querySelectorAll('.tabs a')].forEach(a=>{
-    a.classList.toggle('on', a.dataset.tab === tab);
+    a.classList.toggle('on', a.dataset.tab === tab && !section);
   });
 }
 
@@ -767,6 +795,8 @@ function title(){
 function render(){
   title();
   const app = document.getElementById('app');
+  if(section === 'projects'){ app.innerHTML = viewProjects(); return; }
+  if(section === 'study'){ app.innerHTML = viewStudy(); return; }
   app.innerHTML = tab === 'home' ? viewHome()
     : tab === 'habits' ? viewHabits()
     : tab === 'weight' ? viewWeight()
@@ -797,6 +827,16 @@ function viewHome(){
   }).filter(c=>!isNaN(c.days)).sort((a,b)=>a.days-b.days);
 
   return `
+  <div class="card"><h2>🚀 快捷入口</h2><div class="body">
+    <div class="qgrid">
+      ${[['📋','项目清单',"openSection('projects')"],['📚','学习清单',"openSection('study')"],
+         ['🌱','习惯打卡',"go('habits')"],['⚖️','体重饮水',"go('weight')"],
+         ['✅','待办事项',"go('todos')"],['👤','我的',"go('me')"]]
+        .map(([ic,lb,fn])=>`<div class="qcell" onclick="${fn}">
+          <div class="ic">${ic}</div><div class="lb">${lb}</div></div>`).join('')}
+    </div>
+  </div></div>
+
   ${holidayToday() ? `<div class="card" style="border-color:var(--main)"><div class="body" style="padding:10px 14px">
     <div style="font-size:14px">📅 ${holidayToday()}</div></div></div>` : ''}
 
@@ -865,16 +905,16 @@ function viewHabits(){
   const total = D.habits.length;
   return `
   <div class="card"><h2>今日打卡 <span class="muted">${done.filter(h=>D.habits.includes(h)).length}/${total}</span></h2>
-    <div class="body"><div class="grid3">
+    <div class="body">
       ${D.habits.map(h=>{
         const on = done.includes(h);
-        return `<div class="habit ${on?'on':''}" onclick="toggleHabit('${esc(h).replace(/'/g,'&#39;')}')">
-          <div class="mk">${on?'✓':'○'}</div>
-          <div class="nm">${esc(h)}</div>
-          <div class="st">连续 ${streak(h)} 天</div>
+        return `<div class="hitem ${on?'on':''}" onclick="toggleHabit('${esc(h).replace(/'/g,'&#39;')}')">
+          <span class="box">${on?'✓':''}</span>
+          <span class="nm">${esc(h)}</span>
+          <span class="st">连续 ${streak(h)} 天</span>
         </div>`;
       }).join('')}
-    </div></div>
+    </div>
   </div>
   <div class="card"><h2>最近 14 天</h2><div class="body">
     ${heat14(total)}
@@ -1049,6 +1089,15 @@ function viewMe(){
     <div class="muted" style="margin-top:8px">提醒以电脑版为准；要让 iPhone 到点弹通知，用电脑版导出 .ics 加到系统日历。</div>
   </div></div>
 
+  <div class="card"><h2>📋 项目与学习</h2><div class="body">
+    <div class="qgrid">
+      ${[['📋','项目清单',"openSection('projects')"],['📚','学习清单',"openSection('study')"]]
+        .map(([ic,lb,fn])=>`<div class="qcell" onclick="${fn}">
+          <div class="ic">${ic}</div><div class="lb">${lb}</div></div>`).join('')}
+    </div>
+    <div class="muted" style="margin-top:8px">项目清单：进度、跟进事项、负责人、对接人<br>学习清单：按分类记录想学的内容</div>
+  </div></div>
+
   <div class="card"><h2>配色</h2><div class="body">
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       ${Object.entries(THEMES).map(([k,t])=>`
@@ -1123,6 +1172,165 @@ function importJson(ev){
   };
   r.readAsText(f);
   ev.target.value = '';
+}
+
+/* ========== 项目 / 学习 板块 ========== */
+let section = null;      // 'projects' | 'study' | null
+let openProj = -1;       // 展开的项目序号
+let projForm = null;     // {i:-1新增, name, status, owner, contact, due, next, progress}
+let studyForm = null;
+
+function statusColor(s){
+  return {进行中:'var(--main)', 未开始:'#9C8C8B', 已完成:'#7FA98A', 暂停:'#C9A87C'}[s] || 'var(--main)';
+}
+
+function openSection(name){ section = name; openProj = -1; render(); window.scrollTo(0,0); }
+function closeSection(){ section = null; projForm = null; studyForm = null; render(); }
+
+function viewProjects(){
+  const ps = D.projects || [];
+  const running = ps.filter(p=>p.status==='进行中').length;
+  let h = `<div class="card"><h2>📋 项目清单 <span class="muted">进行中 ${running} · 共 ${ps.length}</span></h2>
+    <div class="body"><button class="pri" style="width:100%" onclick="newProject()">＋ 新增项目</button></div></div>`;
+  if(projForm) h += projectFormHtml();
+  if(!ps.length && !projForm) h += `<div class="card"><div class="body"><div class="empty">还没有项目，点上面新增。</div></div></div>`;
+  ps.forEach((p,i)=>{
+    const todos = p.todos||[];
+    const dn = todos.filter(t=>t.done).length;
+    h += `<div class="card"><h2>${esc(p.name||'未命名')} <span class="muted">${p.status||''} · ${p.progress||0}%</span></h2>
+      <div class="body">
+        <div class="pbar"><i style="width:${p.progress||0}%;background:${statusColor(p.status)}"></i></div>
+        <div class="muted" style="margin-top:6px">
+          ${p.owner?('负责人 '+esc(p.owner)):''} ${p.contact?('· 对接人 '+esc(p.contact)):''}
+          ${p.due?('· 截止 '+esc(p.due)):''}</div>
+        ${p.next?`<div style="margin-top:6px">下一步：${esc(p.next)}</div>`:''}
+        ${p.note?`<div class="muted" style="margin-top:4px">${esc(p.note)}</div>`:''}
+        <div class="row" style="margin-top:10px">
+          <button class="mini" onclick="openProj=${openProj===i?-1:i};render()">跟进 ${dn}/${todos.length}</button>
+          <button class="mini" onclick="editProject(${i})">编辑</button>
+          <button class="mini" onclick="delProject(${i})">删除</button>
+        </div>
+        ${openProj===i?`<div style="margin-top:8px">
+          ${todos.map((t,j)=>`<div class="item"><div class="chk ${t.done?'on':''}" onclick="toggleProjTodo(${i},${j})">${t.done?'✓':''}</div>
+            <span class="t ${t.done?'':''}">${esc(t.text)}</span></div>`).join('')}
+          <div class="row" style="margin-top:8px">
+            <input type="text" id="pt${i}" placeholder="新的跟进事项">
+            <button class="mini" onclick="addProjTodo(${i})">加</button>
+          </div></div>`:''}
+      </div></div>`;
+  });
+  return h;
+}
+
+function projectFormHtml(){
+  const f = projForm;
+  return `<div class="card"><h2>${f.i<0?'新增项目':'编辑项目'}</h2><div class="body">
+    <input type="text" id="pf_name" placeholder="项目名称" value="${esc(f.name||'')}">
+    <div class="row" style="margin-top:8px">
+      <select id="pf_status" style="font-size:16px;padding:8px;border-radius:10px;border:1px solid #F2C6D6;background:#FFFBFD">
+        ${['未开始','进行中','已完成','暂停'].map(s=>`<option ${s===f.status?'selected':''}>${s}</option>`).join('')}
+      </select>
+      <input type="number" id="pf_progress" placeholder="进度%" value="${f.progress||0}" inputmode="numeric" style="width:88px">
+    </div>
+    <input type="text" id="pf_owner" placeholder="负责人" value="${esc(f.owner||'')}" style="margin-top:8px">
+    <input type="text" id="pf_contact" placeholder="对接人" value="${esc(f.contact||'')}" style="margin-top:8px">
+    <input type="text" id="pf_due" placeholder="截止日期" value="${esc(f.due||'')}" style="margin-top:8px" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'">
+    <input type="text" id="pf_next" placeholder="下一步动作" value="${esc(f.next||'')}" style="margin-top:8px">
+    <input type="text" id="pf_note" placeholder="备注" value="${esc(f.note||'')}" style="margin-top:8px">
+    <div class="row" style="margin-top:12px">
+      <button class="pri" style="flex:1" onclick="saveProject()">保存</button>
+      <button onclick="projForm=null;render()">取消</button>
+    </div></div></div>`;
+}
+function newProject(){ projForm = {i:-1, name:'', status:'进行中', owner:'', contact:'', due:'', next:'', progress:0, note:''}; render(); }
+function editProject(i){ const p = D.projects[i]; projForm = Object.assign({}, p, {i:i}); render(); }
+function saveProject(){
+  const f = projForm;
+  const item = {
+    name: document.getElementById('pf_name').value.trim(),
+    status: document.getElementById('pf_status').value,
+    progress: Math.max(0, Math.min(100, parseInt(document.getElementById('pf_progress').value||'0')||0)),
+    owner: document.getElementById('pf_owner').value.trim(),
+    contact: document.getElementById('pf_contact').value.trim(),
+    due: document.getElementById('pf_due').value.trim(),
+    next: document.getElementById('pf_next').value.trim(),
+    note: document.getElementById('pf_note').value.trim()
+  };
+  if(!item.name){ toast('请填写项目名称'); return; }
+  if(f.i < 0){ D.projects.push(Object.assign({id:'p'+Date.now(), todos:[]}, item)); }
+  else { D.projects[f.i] = Object.assign({}, D.projects[f.i], item); }
+  projForm = null; save(); render(); toast('已保存');
+}
+function delProject(i){
+  if(!confirm('删除这个项目？')) return;
+  D.projects.splice(i,1); save(); render();
+}
+function toggleProjTodo(i,j){
+  const t = D.projects[i].todos[j];
+  t.done = !t.done; save(); render();
+}
+function addProjTodo(i){
+  const el = document.getElementById('pt'+i);
+  const v = el.value.trim();
+  if(!v) return;
+  D.projects[i].todos = D.projects[i].todos || [];
+  D.projects[i].todos.push({text:v, done:false, date:''});
+  save(); render();
+}
+
+function viewStudy(){
+  const items = D.study_items || [];
+  const cats = D.study_cats || [];
+  let h = `<div class="card"><h2>📚 学习清单</h2><div class="body">
+    <button class="pri" style="width:100%" onclick="newStudyItem()">＋ 添加学习条目</button></div></div>`;
+  if(studyForm) h += studyFormHtml();
+  cats.forEach(c=>{
+    const sub = items.filter(i=>i.cat===c);
+    if(!sub.length) return;
+    h += `<div class="card"><h2>📂 ${esc(c)} <span class="muted">${sub.length} 项</span></h2><div class="body">
+      ${sub.map((it,i)=>`<div class="item">
+        <span class="tag">${esc(it.status||'想学')}</span>
+        <span class="t">${esc(it.name)}</span>
+        <button class="mini ghost" onclick="delStudyItem('${esc(it.id)}')">删</button>
+      </div>`).join('')}</div></div>`;
+  });
+  if(!items.length && !studyForm) h += `<div class="card"><div class="body"><div class="empty">还没有学习内容，点上面添加。</div></div></div>`;
+  const logs = D.study_log || [];
+  const mo = logs.filter(x=>String(x.date||'').startsWith(today().slice(0,7)))
+                 .reduce((s,x)=>s+(Number(x.minutes)||0),0);
+  h += `<div class="card"><h2>⏱️ 学习时长</h2><div class="body">
+    <div class="big" style="font-size:24px">${mo} 分钟</div>
+    <div class="muted">本月累计</div></div></div>`;
+  return h;
+}
+function studyFormHtml(){
+  const cats = D.study_cats || ['其他'];
+  return `<div class="card"><h2>添加学习条目</h2><div class="body">
+    <input type="text" id="sf_name" placeholder="想学什么？" value="${esc(studyForm.name||'')}">
+    <div class="row" style="margin-top:8px">
+      <select id="sf_cat" style="font-size:16px;padding:8px;border-radius:10px;border:1px solid #F2C6D6;background:#FFFBFD;flex:1">
+        ${cats.map(c=>`<option ${c===studyForm.cat?'selected':''}>${esc(c)}</option>`).join('')}
+      </select>
+      <select id="sf_status" style="font-size:16px;padding:8px;border-radius:10px;border:1px solid #F2C6D6;background:#FFFBFD">
+        ${['想学','在学','已学'].map(s=>`<option ${s===studyForm.status?'selected':''}>${s}</option>`).join('')}
+      </select>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="pri" style="flex:1" onclick="saveStudyItem()">保存</button>
+      <button onclick="studyForm=null;render()">取消</button>
+    </div></div></div>`;
+}
+function newStudyItem(){ studyForm = {name:'', cat:(D.study_cats||['其他'])[0], status:'想学'}; render(); }
+function saveStudyItem(){
+  const name = document.getElementById('sf_name').value.trim();
+  if(!name){ toast('请填写学习内容'); return; }
+  D.study_items.push({id:'s'+Date.now(), name:name,
+    cat:document.getElementById('sf_cat').value, status:document.getElementById('sf_status').value});
+  studyForm = null; save(); render(); toast('已添加');
+}
+function delStudyItem(id){
+  D.study_items = D.study_items.filter(x=>x.id!==id);
+  save(); render();
 }
 
 /* ---------- 启动 ---------- */
