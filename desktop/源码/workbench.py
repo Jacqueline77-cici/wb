@@ -249,21 +249,17 @@ class App:
         head.pack(fill="x")
         tk.Label(head, text=APP_NAME, bg=C["main"], fg="white",
                  font=("Microsoft YaHei", 14, "bold")).pack(pady=(12, 0))
-        tk.Label(head, text="工作台", bg=C["main"], fg=tint(C["main"], 0.2),
-                 font=("Microsoft YaHei", 8)).pack(pady=(0, 10))
+        tk.Label(head, text=MOTTO, bg=C["main"], fg=tint(C["main"], 0.25),
+                 font=("Microsoft YaHei", 9)).pack(pady=(2, 12))
 
-        # 底部固定区：格言 + 配色按钮
+        # 底部固定区：配色按钮
         bottom = tk.Frame(self.nav, bg=C["soft"])
         bottom.pack(side="bottom", fill="x")
         tk.Frame(self.nav, bg=C["border"], height=1).pack(side="bottom", fill="x")
-        tk.Label(bottom, text=MOTTO, bg=C["soft"], fg=C["dark"],
-                 font=("Microsoft YaHei", 9, "bold")).pack(pady=(8, 2))
-        tk.Label(bottom, text="—— 今日格言", bg=C["soft"], fg=C["muted"],
-                 font=("Microsoft YaHei", 7)).pack(pady=(0, 8))
         self.pal_btn = tk.Button(bottom, text="🎨 配色", bg=C["card"], fg=C["muted"], bd=0,
                                  relief="flat", font=("Microsoft YaHei", 8),
                                  activebackground=C["light"], command=self.open_palette)
-        self.pal_btn.pack(fill="x", padx=10, pady=(0, 10))
+        self.pal_btn.pack(fill="x", padx=10, pady=8)
 
         # 可滚动的菜单区
         self.nav_can = tk.Canvas(self.nav, bg=C["card"], highlightthickness=0, width=184)
