@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Jacqueline 工作台</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Jacqueline">
+<meta name="theme-color" content="#FFF0F5">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192-v3.png">
+<link rel="apple-touch-icon" href="icon-180-v3.png">
+<style>
+:root{
+  --bg:#FFF0F5; --card:#FFFFFF; --main:#EC407A; --dark:#AD1457;
+  --light:#FCE4EC; --text:#333; --muted:#8A6D7C; --border:#F4A7C0; --soft:#FDF1F5;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;
+  font-size:15px;-webkit-text-size-adjust:100%}
+body{padding-top:env(safe-area-inset-top);padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:10;background:var(--bg);padding:8px 18px 6px;
+  padding-top:calc(8px + env(safe-area-inset-top));max-width:560px;margin:0 auto}
+h1{margin:0;font-size:22px;color:var(--dark);letter-spacing:.5px}
+.sub{color:var(--muted);font-size:12px;margin-top:3px}
+main{padding:0 14px 12px;max-width:560px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  margin:10px 0;overflow:hidden}
+.card h2{margin:0;padding:9px 14px;background:var(--light);color:var(--dark);
+  font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.card .body{padding:12px 14px}
+.row{display:flex;align-items:center;gap:8px}
+.row+.row{margin-top:8px}
+.muted{color:var(--muted);font-size:12px}
+input[type=text],input[type=number],input[type=date],textarea{
+  width:100%;font-size:16px;padding:9px 10px;border:1px solid #F2C6D6;border-radius:10px;
+  background:#FFFBFD;color:var(--text);font-family:inherit;outline:none}
+input:focus,textarea:focus{border-color:var(--main);background:#fff}
+textarea{resize:vertical;min-height:78px;line-height:1.5}
+button{font-family:inherit;font-size:14px;border:0;border-radius:10px;padding:9px 14px;
+  background:var(--light);color:var(--dark);font-weight:600}
+button.pri{background:var(--main);color:#fff}
+button:active{opacity:.72}
+button.mini{padding:5px 10px;font-size:12px;border-radius:8px}
+.ghost{background:transparent;color:var(--muted);padding:5px 8px}
+.item{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid #FBEDF3}
+.item:last-child{border-bottom:0}
+.item .t{flex:1;min-width:0;word-break:break-word}
+.item .time{color:var(--main);font-weight:700;font-size:13px;min-width:44px}
+.done .t{text-decoration:line-through;color:var(--muted)}
+.chk{width:23px;height:23px;border-radius:50%;border:2px solid #F3B6CC;background:#fff;
+  flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff}
+.chk.on{background:var(--main);border-color:var(--main)}
+.big{font-size:30px;font-weight:700;color:var(--dark);font-family:-apple-system,"PingFang SC"}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.habit{background:var(--light);border-radius:12px;padding:10px 6px;text-align:center;
+  border:1px solid transparent}
+.habit.on{background:var(--main);border-color:var(--main)}
+.habit .nm{font-size:13px;font-weight:600;color:var(--dark);margin-top:4px;line-height:1.2}
+.habit .st{font-size:11px;color:var(--muted);margin-top:2px}
+.habit.on .nm,.habit.on .st{color:#fff}
+.habit .mk{font-size:20px;line-height:1;color:#D81B60}
+.habit.on .mk{color:#fff}
+.cups{display:flex;gap:6px}
+.cup{flex:1;height:34px;border-radius:8px;background:var(--light);border:1px solid transparent;
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
+.cup.on{background:var(--main);color:#fff;border-color:var(--main)}
+.pbar{height:12px;border-radius:6px;background:var(--light);overflow:hidden;margin:8px 0 4px}
+.pbar>i{display:block;height:100%;background:var(--main);border-radius:6px;transition:width .3s}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;flex-wrap:wrap;background:#fff;
+  border-top:1px solid #F6D3E0;padding-bottom:env(safe-area-inset-bottom)}
+.motto{width:100%;text-align:center;font-size:11px;color:var(--muted);padding:4px 0 3px;
+  background:var(--soft);letter-spacing:1px}
+.motto b{color:var(--dark);font-weight:600}
+.tabs a{flex:1;text-align:center;padding:7px 0 6px;text-decoration:none;color:var(--muted);
+  font-size:10px;line-height:1.4}
+.tabs a .ic{display:block;font-size:20px;line-height:1.3;filter:grayscale(1);opacity:.55}
+.tabs a.on{color:var(--main);font-weight:700}
+.tabs a.on .ic{filter:none;opacity:1}
+.cd{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.cd .pill{flex:none;background:var(--light);border-radius:12px;padding:8px 11px;text-align:center}
+.cd .pill b{display:block;color:var(--main);font-size:18px;line-height:1.2}
+.cd .pill span{font-size:11px;color:var(--muted)}
+.empty{color:var(--muted);font-size:13px;padding:4px 0}
+.tag{background:var(--light);color:var(--dark);border-radius:6px;padding:1px 6px;font-size:11px}
+.split{display:flex;justify-content:space-between;align-items:center;gap:8px}
+svg.spark{width:100%;height:120px;display:block}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;background:rgba(173,20,87,.94);
+  color:#fff;padding:9px 18px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;
+  transition:opacity .25s;z-index:50;max-width:80vw;text-align:center}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="htitle">Jacqueline</h1>
+  <div class="sub" id="hsub"></div>
+</header>
+<main id="app"></main>
+<nav class="tabs" id="tabs">
+  <div class="motto" style="background:var(--soft)"><b>人生，易如反掌</b>　<span style="opacity:.7">今日格言</span></div>
+  <a href="#" data-tab="home"><span class="ic">🌸</span>今日</a>
+  <a href="#" data-tab="habits"><span class="ic">🌱</span>打卡</a>
+  <a href="#" data-tab="weight"><span class="ic">⚖️</span>体重</a>
+  <a href="#" data-tab="todos"><span class="ic">✅</span>待办</a>
+  <a href="#" data-tab="me"><span class="ic">👤</span>我的</a>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========== 数据 ========== */
+const KEY = 'wb_data_v1';
+const WD = ['一','二','三','四','五','六','日'];
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const today = () => ymd(new Date());
+const wdIdx = () => (new Date().getDay() + 6) % 7;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function defaults(){
+  return {
+    settings:{autostart:false,evening_enabled:true,evening_time:'21:30',backup_keep:30,last_evening:'',theme:'morandi_blue'},
+    schedule_blocks:[
+      {time:'06:30',label:'起床',note:''},
+      {time:'07:50',label:'送孩子上幼儿园',note:''},
+      {time:'09:00-12:00',label:'工作（上午）',note:''},
+      {time:'12:00-14:00',label:'午休 / 普拉提',note:''},
+      {time:'14:00-18:00',label:'工作（下午）',note:''},
+      {time:'18:30',label:'接孩子从幼儿园',note:''},
+      {time:'晚上',label:'护肤 / 家庭时间',note:''},
+      {time:'23:00',label:'睡前准备',note:''}
+    ],
+    weekly_template:{0:[],1:[],2:[],3:[],4:[],5:[],6:[]},
+    week_goals:{}, daily_three:{}, recurring_tasks:[],
+    countdowns:[{name:'减肥目标 55kg',date:'2027-01-31'}],
+    weight_goal:{current:65,target:55,date:'2027-01-31'},
+    weight_records:[], diet_records:[], water:{},
+    medical_beauty:[], study_log:[], books:[],
+    cpa_subjects:['会计','审计','财务成本管理','公司战略与风险管理','经济法','税法']
+      .map(n => ({name:n,status:'未报名',note:''})),
+    habits:['普拉提','早睡','饮水','学习','写日记','少糖少碳水'],
+    habit_done:{}, todos:[], daily_logs:{}, moods:{}, materials:[], publish:{},
+    weekly_review:{good:'',bad:'',plan:''}, monthly_goal:'', notes:'', reminders:[]
+  };
+}
+
+/* ========== 配色 ========== */
+const THEMES = {
+  morandi_rose:{name:'莫兰迪粉',dot:'#C9A7A5',bg:'#F6F1F0',card:'#FFFFFF',main:'#C9A7A5',dark:'#8C6B6A',light:'#F0E4E3',text:'#3B3534',muted:'#9A8C8B',border:'#E3D6D4',soft:'#F3EAEA'},
+  morandi_blue:{name:'莫兰迪蓝',dot:'#8FA3B0',bg:'#F0F3F5',card:'#FFFFFF',main:'#8FA3B0',dark:'#5E7381',light:'#E2E9ED',text:'#33383B',muted:'#8B9499',border:'#D5DEE3',soft:'#E9EFF2'},
+  morandi_sage:{name:'莫兰迪豆绿',dot:'#9BAF99',bg:'#F1F4F0',card:'#FFFFFF',main:'#9BAF99',dark:'#6C8069',light:'#E4EBE2',text:'#353A35',muted:'#8D9689',border:'#D6DFD3',soft:'#EBF0E9'},
+  morandi_cream:{name:'莫兰迪奶黄',dot:'#C8B58C',bg:'#F8F4EC',card:'#FFFFFF',main:'#C8B58C',dark:'#93805C',light:'#EFE7D6',text:'#3A3630',muted:'#9A9284',border:'#E4DAC4',soft:'#F2ECDF'},
+  morandi_mauve:{name:'莫兰迪灰紫',dot:'#A396AC',bg:'#F4F1F5',card:'#FFFFFF',main:'#A396AC',dark:'#74667F',light:'#E8E3EC',text:'#37333A',muted:'#938C98',border:'#DDD5E1',soft:'#EFEBF1'},
+  morandi_greige:{name:'莫兰迪米灰',dot:'#B7A99C',bg:'#F5F3F0',card:'#FFFFFF',main:'#B7A99C',dark:'#83776B',light:'#EBE5DE',text:'#38342F',muted:'#948C82',border:'#E1D9CF',soft:'#F1ECE5'},
+};
+function applyTheme(key){
+  const t = THEMES[key] || THEMES.morandi_blue;
+  const r = document.documentElement.style;
+  ['bg','card','main','dark','light','text','muted','border','soft'].forEach(k => r.setProperty('--'+k, t[k]));
+  const meta = document.querySelector('meta[name=theme-color]');
+  if(meta) meta.setAttribute('content', t.bg);
+}
+function setTheme(k){
+  D.settings = D.settings || {};
+  D.settings.theme = k;
+  save(); applyTheme(k); render();
+}
+
+let D = defaults();
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){
+      const o = JSON.parse(raw);
+      const d = defaults();
+      for(const k in d){ if(o[k] !== undefined) d[k] = o[k]; }
+      D = d;
+    }
+  }catch(e){ D = defaults(); }
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(D)); }
+  catch(e){ toast('保存失败：手机存储空间不足'); }
+}
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('on'), 1600);
+}
+
+/* ========== 每日一句 ========== */
+const QUOTES = [
+  {t:'你今天的样子，就是你日复一日选择的结果。', s:''},
+  {t:'不必和谁比较，你有你的花期。', s:''},
+  {t:'允许自己慢慢来，也允许自己重新开始。', s:''},
+  {t:'每一次微小的坚持，都算数。', s:''},
+  {t:'你的努力不必被看见，它已经在改变你。', s:''},
+  {t:'成长是安静发生的事。', s:''},
+  {t:'今天的你，比昨天多懂自己一点。', s:''},
+  {t:'不用急着成为谁，先成为让自己舒服的人。', s:''},
+  {t:'你正在成为你想成为的样子。', s:''},
+  {t:'状态不好也没关系，休息也是计划的一部分。', s:''},
+  {t:'自律不是苦行，是给未来的自己让路。', s:''},
+  {t:'你有权利慢慢来。', s:''},
+  {t:'先完成，再完美。', s:''},
+  {t:'与其焦虑，不如做一件小事。', s:''},
+  {t:'你值得所有的好事发生。', s:''},
+  {t:'把标准放在自己身上，而不是别人嘴里。', s:''},
+  {t:'你已经比昨天多走了一步。', s:''},
+  {t:'心里有光的人，走夜路也不怕。', s:''},
+  {t:'先照顾好自己，再照顾世界。', s:''},
+  {t:'你的节奏没有错。', s:''},
+  {t:'不必事事完美，够好就很好了。', s:''},
+  {t:'人生不是赛跑，是旅行。', s:''},
+  {t:'你想成为的样子，值得你慢慢打磨。', s:''},
+  {t:'偶尔停下来，也是在向前。', s:''},
+  {t:'把注意力放回自己身上。', s:''},
+  {t:'别人的评价是风，你的天空是自己的。', s:''},
+  {t:'你正在做的事，很了不起。', s:''},
+  {t:'今天也要好好爱自己。', s:''},
+  {t:'进步不必和别人比，和昨天的自己比。', s:''},
+  {t:'你不需要被所有人理解。', s:''},
+  {t:'心里有热爱，脚下就有路。', s:''},
+  {t:'变好是一件很慢的事，但方向要对。', s:''},
+  {t:'所有的重来，都算数。', s:''},
+  {t:'你比你以为的更有力量。', s:''},
+  {t:'好好吃饭、好好睡觉，就是了不起的自律。', s:''},
+  {t:'不要用别人的尺子量自己。', s:''},
+  {t:'你正在成为自己的靠山。', s:''},
+  {t:'每一次坚持都在悄悄改变你的气质。', s:''},
+  {t:'不慌不忙，也是一种能力。', s:''},
+  {t:'允许一切发生，然后继续走自己的路。', s:''},
+  {t:'你的努力会有回声。', s:''},
+  {t:'一点点进步，累积成人生的变化。', s:''},
+  {t:'今天做的小事，会长成明天的底气。', s:''},
+  {t:'你不需要取悦所有人。', s:''},
+  {t:'记得抬头看看天。', s:''},
+  {t:'你的价值不由忙碌定义。', s:''},
+  {t:'变得更好的路上，允许自己偶尔停顿。', s:''},
+  {t:'认真生活的人，自带光芒。', s:''},
+  {t:'你比昨天更了解自己了。', s:''},
+  {t:'慢一点也没关系，方向对就好。', s:''},
+  {t:'生活是自己写的，不必照抄别人。', s:''},
+  {t:'心里踏实，路就稳。', s:''},
+  {t:'允许自己重新开始，永远不晚。', s:''},
+  {t:'你走的每一步都算数。', s:''},
+  {t:'今天也值得被认真过。', s:''},
+  {t:'先照顾情绪，再解决问题。', s:''},
+  {t:'人生的好运，藏在日复一日的秩序里。', s:''},
+  {t:'你正在做的事，会变成你的底气。', s:''},
+  {t:'不给别人期待，也不辜负自己。', s:''},
+  {t:'做一个安静成长的人。', s:''},
+  {t:'行动是治愈焦虑最好的药。', s:''},
+  {t:'先做五分钟，再决定要不要继续。', s:''},
+  {t:'完成比完美更重要。', s:''},
+  {t:'每天进步一点点，一年就是三百六十五步。', s:''},
+  {t:'坚持不是咬牙硬撑，是把它变得容易。', s:''},
+  {t:'你已经开始了，这比想清楚更重要。', s:''},
+  {t:'今天做的这一点，就是明天的底气。', s:''},
+  {t:'计划写下来，就完成了一半。', s:''},
+  {t:'不怕慢，就怕停。', s:''},
+  {t:'做难的事，但做具体的事。', s:''},
+  {t:'每一次行动都在为你投票。', s:''},
+  {t:'把大目标切成今天能做完的小块。', s:''},
+  {t:'动起来，答案会自己出现。', s:''},
+  {t:'你不需要状态很好才去开始。', s:''},
+  {t:'一点点坚持，胜过偶尔的爆发。', s:''},
+  {t:'今天走了一小步，也算数。', s:''},
+  {t:'坚持的秘诀，是让它变简单。', s:''},
+  {t:'别等有空了才去做喜欢的事。', s:''},
+  {t:'你已经比想象中做得好了。', s:''},
+  {t:'行动会带来动力，动力会带来行动。', s:''},
+  {t:'拖延时，先做最小的那一步。', s:''},
+  {t:'每天做一点，长期看很惊人。', s:''},
+  {t:'不必心急，方向对就值得。', s:''},
+  {t:'想到就去做，别等完美时机。', s:''},
+  {t:'坚持一件事，本身就是回答。', s:''},
+  {t:'你正在做一件很难但很对的事。', s:''},
+  {t:'早开始五分钟，胜过计划一整天。', s:''},
+  {t:'别把目标说给所有人听，做给时间看。', s:''},
+  {t:'每天一点点，就是了不起。', s:''},
+  {t:'你有权做选择，也有权休息。', s:''},
+  {t:'先完成今天的计划。', s:''},
+  {t:'复利的前提是时间，而时间的前提是开始。', s:''},
+  {t:'做完比想好更重要。', s:''},
+  {t:'计划是用来执行的，不是用来收藏的。', s:''},
+  {t:'此刻的专注，是最好的准备。', s:''},
+  {t:'把手弄脏，答案就出来了。', s:''},
+  {t:'行动给你底气。', s:''},
+  {t:'每一次出门都是一次胜利。', s:''},
+  {t:'别怕慢，就怕给自己找理由。', s:''},
+  {t:'坚持的尽头是习惯。', s:''},
+  {t:'你比自己想的更能坚持。', s:''},
+  {t:'每天做一件让自己更满意的小事。', s:''},
+  {t:'行动是最快的信心。', s:''},
+  {t:'把今天该做的做完，晚上就轻松了。', s:''},
+  {t:'你值得为想要的生活多走一步。', s:''},
+  {t:'别让“等”字偷走你的时间。', s:''},
+  {t:'三分钟热度也值得开始。', s:''},
+  {t:'慢慢来，比较快。', s:''},
+  {t:'行动会带来复利。', s:''},
+  {t:'今天就把“想做”变成“在做”。', s:''},
+  {t:'坚持不用宣言，用打卡。', s:''},
+  {t:'你已经比想象中走得更远。', s:''},
+  {t:'困难的事做完就不难了。', s:''},
+  {t:'每次行动都在缩小不确定。', s:''},
+  {t:'一鼓作气，把最难的那步先做掉。', s:''},
+  {t:'今天，先做最重要的一件事。', s:''},
+  {t:'时间是最好的老师，也是最安静的。', s:''},
+  {t:'专注是最贵的礼物，也是最便宜的。', s:''},
+  {t:'把一整天过好，胜过计划一整年。', s:''},
+  {t:'你只有现在。', s:''},
+  {t:'一次只做一件事。', s:''},
+  {t:'把手机放远一点，你会发现时间变多了。', s:''},
+  {t:'慢下来，效率反而高。', s:''},
+  {t:'专注的人自带光芒。', s:''},
+  {t:'不必赶路，但要一直在路上。', s:''},
+  {t:'今天的一小时，胜过明天的三小时。', s:''},
+  {t:'给重要的事留出整块时间。', s:''},
+  {t:'岁月不居，时节如流。', s:''},
+  {t:'你能掌控的只有当下。', s:''},
+  {t:'少刷一点手机，多看一点书。', s:''},
+  {t:'安静的一小时，胜过嘈杂的一天。', s:''},
+  {t:'时间是最公平的货币。', s:''},
+  {t:'把日子过成自己喜欢的样子，需要时间。', s:''},
+  {t:'专注是最高级的自律。', s:''},
+  {t:'做事时不要分心，休息时不要内疚。', s:''},
+  {t:'你的一天，由你如何使用注意力决定。', s:''},
+  {t:'三十分钟的深度，胜过三小时的浅忙。', s:''},
+  {t:'留一点空白给自己。', s:''},
+  {t:'计划的意义，是让时间有去处。', s:''},
+  {t:'时间会奖励专注的人。', s:''},
+  {t:'不急，但不停。', s:''},
+  {t:'把“以后再说”换成“今天先做十分钟”。', s:''},
+  {t:'一天只做一件真正重要的事。', s:''},
+  {t:'时间花在哪里，看得见。', s:''},
+  {t:'你今天的清醒，是留给自己的礼物。', s:''},
+  {t:'好好利用一整个上午。', s:''},
+  {t:'专注久了，答案自己会来。', s:''},
+  {t:'不追求面面俱到，只追求深入。', s:''},
+  {t:'早起一小时，胜过熬夜两小时。', s:''},
+  {t:'与其挤时间，不如省时间。', s:''},
+  {t:'效率的前提是安心。', s:''},
+  {t:'时间会证明一切努力。', s:''},
+  {t:'每天留出一小时不被打扰。', s:''},
+  {t:'做重要的事，而不是容易的事。', s:''},
+  {t:'你的一天值得被认真安排。', s:''},
+  {t:'慢一点做事，快一点休息。', s:''},
+  {t:'认真度过的一小时，抵过焦虑的一整天。', s:''},
+  {t:'别把时间浪费在反复纠结上。', s:''},
+  {t:'时间是最公平的裁判。', s:''},
+  {t:'每一次专注都在积累底气。', s:''},
+  {t:'给自己一个不被打扰的清晨。', s:''},
+  {t:'把琐事交给清单，把心留给重要的人。', s:''},
+  {t:'秩序感让时间变多。', s:''},
+  {t:'你不必抓紧每一分钟。', s:''},
+  {t:'一天深耕，胜过百种浅尝。', s:''},
+  {t:'静下来，事情就顺了。', s:''},
+  {t:'把今天过好，明天自己会来。', s:''},
+  {t:'温柔地对待自己，也是一种能力。', s:''},
+  {t:'你不需要一直坚强，偶尔脆弱也没关系。', s:''},
+  {t:'先让自己舒服，再谈效率。', s:''},
+  {t:'好好吃饭，是对生活最基本的尊重。', s:''},
+  {t:'你的身体值得被好好照顾。', s:''},
+  {t:'不要用对付别人的方式对付自己。', s:''},
+  {t:'情绪来了就让它来，它也会走。', s:''},
+  {t:'你可以拒绝，也可以说“不”。', s:''},
+  {t:'自己永远是第一位的投资人。', s:''},
+  {t:'允许自己有缺点。', s:''},
+  {t:'你值得被温柔以待，包括被自己。', s:''},
+  {t:'偶尔撒个娇，也是一种自我修复。', s:''},
+  {t:'真正的成熟，是学会对自己温柔。', s:''},
+  {t:'心里委屈要说出来。', s:''},
+  {t:'今天的你，已经很努力了。', s:''},
+  {t:'洗个热水澡，把烦恼留在门外。', s:''},
+  {t:'允许自己偶尔幼稚。', s:''},
+  {t:'别对自己太苛刻。', s:''},
+  {t:'温柔要有，但首先温柔对你自己。', s:''},
+  {t:'你不是机器，要有休息的权利。', s:''},
+  {t:'好好睡一觉，胜过想通所有事。', s:''},
+  {t:'情绪没有对错，只有需要被看见。', s:''},
+  {t:'疼惜自己的过程，也是成长。', s:''},
+  {t:'生活再忙，也要给自己留一盏灯。', s:''},
+  {t:'你已经够好了。', s:''},
+  {t:'不用向任何人证明你值得被爱。', s:''},
+  {t:'保持体面，也保持松弛。', s:''},
+  {t:'和自己和解，是一生的功课。', s:''},
+  {t:'你的感受是重要的。', s:''},
+  {t:'给自己一点耐心，你不是机器。', s:''},
+  {t:'不想做的时候，可以不做。', s:''},
+  {t:'照顾好情绪，才能照顾好事情。', s:''},
+  {t:'心里有光的人，不惧长夜。', s:''},
+  {t:'抱抱自己，今天辛苦了。', s:''},
+  {t:'适度放松，才有力气认真。', s:''},
+  {t:'你不必事事领先。', s:''},
+  {t:'偶尔自私一点，是爱自己。', s:''},
+  {t:'把“应该”换成“想要”。', s:''},
+  {t:'你值得拥有一段不被打扰的时光。', s:''},
+  {t:'温柔对待自己的身体。', s:''},
+  {t:'累了就休息，别硬撑。', s:''},
+  {t:'你的心情无需解释。', s:''},
+  {t:'好好说话，也包括对自己。', s:''},
+  {t:'不再为难自己，是成长的标志。', s:''},
+  {t:'你的价值不由产出多少决定。', s:''},
+  {t:'允许自己有“低电量”的日子。', s:''},
+  {t:'生活是用来过的，不是用来熬的。', s:''},
+  {t:'心里的小情绪，也值得被认真对待。', s:''},
+  {t:'你可以既想变好，又不苛责自己。', s:''},
+  {t:'善待自己，是一生的修行。', s:''},
+  {t:'把自己照顾好，就是最了不起的事。', s:''},
+  {t:'给自己一点偏爱。', s:''},
+  {t:'慢下来听听自己的身体。', s:''},
+  {t:'情绪稳了，世界就安静了。', s:''},
+  {t:'别用忙碌掩饰委屈。', s:''},
+  {t:'陪孩子长大的时间，比任何成就都珍贵。', s:''},
+  {t:'家是让你放松的地方。', s:''},
+  {t:'爱需要表达，也需要被表达。', s:''},
+  {t:'和家人吃一顿饭，比什么都治愈。', s:''},
+  {t:'父母的健康，是最该放在第一位的事。', s:''},
+  {t:'一家人的晚餐，是最踏实的幸福。', s:''},
+  {t:'陪伴比陪伴的时间更重要。', s:''},
+  {t:'你爱他们，他们也爱你。', s:''},
+  {t:'家人的笑容，是最好的成绩单。', s:''},
+  {t:'好好说话，是给家人最好的礼物。', s:''},
+  {t:'孩子需要的是快乐的妈妈，不是完美的妈妈。', s:''},
+  {t:'给家人一个拥抱。', s:''},
+  {t:'亲情是港湾。', s:''},
+  {t:'主动打个电话，别等想起来。', s:''},
+  {t:'你在他们眼里，永远是年轻的。', s:''},
+  {t:'和父母聊聊天，像朋友一样。', s:''},
+  {t:'家人的安康，就是最好的礼物。', s:''},
+  {t:'陪伴家人，也陪伴自己。', s:''},
+  {t:'一起吃饭的机会，要珍惜。', s:''},
+  {t:'你的稳定，是家里的定心丸。', s:''},
+  {t:'有家人在的地方，就是好地方。', s:''},
+  {t:'爱家人，也别忘了爱自己。', s:''},
+  {t:'关心要具体，陪伴要长久。', s:''},
+  {t:'和家人一起变老，是最浪漫的事。', s:''},
+  {t:'孩子会记得你陪他的那些小事。', s:''},
+  {t:'家是努力的意义。', s:''},
+  {t:'抽时间陪陪重要的人。', s:''},
+  {t:'有家人等门，是最幸福的事。', s:''},
+  {t:'把周末留一点给家人。', s:''},
+  {t:'家庭最好的风水，是彼此体谅。', s:''},
+  {t:'你的松弛，会传染给家人。', s:''},
+  {t:'常回家看看。', s:''},
+  {t:'和家人一起笑一笑。', s:''},
+  {t:'认真陪一个人，比说一百句道理都管用。', s:''},
+  {t:'你已经是很好的家人了。', s:''},
+  {t:'亲人之间的爱，不需要理由。', s:''},
+  {t:'抽空陪他们走走。', s:''},
+  {t:'陪伴是最长情的告白。', s:''},
+  {t:'让家成为最不需要解释的地方。', s:''},
+  {t:'记得给家里买点他们爱吃的。', s:''},
+  {t:'一起做家务，也是相处。', s:''},
+  {t:'你和家人，都是彼此的底气。', s:''},
+  {t:'有你们在，就很安心。', s:''},
+  {t:'把爱说出来，不要只在心里。', s:''},
+  {t:'家，是你一天结束后的充电站。', s:''},
+  {t:'陪伴的时间，质量比长度重要。', s:''},
+  {t:'把爱藏起来，就变成了遗憾。', s:''},
+  {t:'身体是革命的本钱。', s:''},
+  {t:'好好睡觉，是对明天最好的投资。', s:''},
+  {t:'多喝一杯水，多走一千步。', s:''},
+  {t:'瘦下来是为了健康，不是为了别人。', s:''},
+  {t:'睡眠是最便宜的美容药。', s:''},
+  {t:'规律吃饭，胜过任何减肥法。', s:''},
+  {t:'每天动一动，身体会记住。', s:''},
+  {t:'身体轻了，心也会轻。', s:''},
+  {t:'疼爱身体，不等于偷懒。', s:''},
+  {t:'按时吃早餐。', s:''},
+  {t:'给自己泡一杯热茶。', s:''},
+  {t:'走一走，看看外面的天。', s:''},
+  {t:'少熬夜，是最划算的自律。', s:''},
+  {t:'你的目标数字，不该以健康为代价。', s:''},
+  {t:'拉伸五分钟，腰背会谢谢你。', s:''},
+  {t:'心情好，身体也会好。', s:''},
+  {t:'保持水分充足。', s:''},
+  {t:'健康是每天一点一滴攒出来的。', s:''},
+  {t:'别用忙碌换健康。', s:''},
+  {t:'照顾好今天的三餐。', s:''},
+  {t:'身体是你唯一的居所。', s:''},
+  {t:'好好休息，才能走更远的路。', s:''},
+  {t:'生病时对自己宽容一点。', s:''},
+  {t:'你值得健健康康的。', s:''},
+  {t:'规律比强度更重要。', s:''},
+  {t:'每天晒晒太阳。', s:''},
+  {t:'身体有反馈，别忽略它。', s:''},
+  {t:'慢慢瘦，别急。', s:''},
+  {t:'今天的步数达标了吗？', s:''},
+  {t:'身体舒服了，做事才有劲。', s:''},
+  {t:'水果和蔬菜，是最温柔的安排。', s:''},
+  {t:'好好休息，是今天最重要的事。', s:''},
+  {t:'把健康放回日程的第一项。', s:''},
+  {t:'对自己好，从好好吃饭开始。', s:''},
+  {t:'让身体舒服一点，别让它疼。', s:''},
+  {t:'慢跑、散步、拉伸，都算数。', s:''},
+  {t:'规律作息，是最贵的护肤品。', s:''},
+  {t:'你只有一个身体，请好好待它。', s:''},
+  {t:'今天也喝够水了吗？', s:''},
+  {t:'让身体先暖起来，再开始一天。', s:''},
+  {t:'勇敢不是不害怕，是害怕也往前走。', s:''},
+  {t:'你已经比昨天的自己勇敢了。', s:''},
+  {t:'敢开始，就已经赢了一半。', s:''},
+  {t:'怕也没关系，可以边怕边做。', s:''},
+  {t:'你有勇气重新开始。', s:''},
+  {t:'不怕慢，就怕不敢。', s:''},
+  {t:'走难走的路，才会有新发现。', s:''},
+  {t:'面对，比逃避更轻松。', s:''},
+  {t:'你比自己想象的更能扛。', s:''},
+  {t:'试一试，最坏不过是重来。', s:''},
+  {t:'你的坚持，终将美好。', s:''},
+  {t:'不确定的时候，先做那件确定有用的事。', s:''},
+  {t:'你想做的事，值得被认真做一次。', s:''},
+  {t:'难的事情做多了，就简单了。', s:''},
+  {t:'你的勇气，比你想的更管用。', s:''},
+  {t:'先迈出第一步，别等准备好。', s:''},
+  {t:'允许自己害怕，并继续前行。', s:''},
+  {t:'突破常常发生在最想放弃的时候。', s:''},
+  {t:'不轻易放弃自己。', s:''},
+  {t:'你可以重新定义什么叫“值得”。', s:''},
+  {t:'大胆一点，人生很短。', s:''},
+  {t:'你不是一个人在走。', s:''},
+  {t:'把“我不行”改成“我先试试”。', s:''},
+  {t:'那些让你成长的事，都有点难。', s:''},
+  {t:'有缺点的勇气也是勇气。', s:''},
+  {t:'你已经想清楚了，只差动手。', s:''},
+  {t:'你的野心值得被认真对待。', s:''},
+  {t:'心里有光的人，敢走夜路。', s:''},
+  {t:'把大石头先搬起来。', s:''},
+  {t:'你能走到今天，靠的不是运气。', s:''},
+  {t:'昨天做不到的事，今天可以。', s:''},
+  {t:'不设限的人生。', s:''},
+  {t:'你的勇气，一直都在。', s:''},
+  {t:'迈出去，路就宽了。', s:''},
+  {t:'有些门，要推一下才知道。', s:''},
+  {t:'今天，做那个一直想做的小事。', s:''},
+  {t:'你不必要求自己毫不害怕。', s:''},
+  {t:'开始不需要仪式感。', s:''},
+  {t:'一步一步，也能走到远方。', s:''},
+  {t:'给自己一个重新出发的理由。', s:''},
+  {t:'热爱可抵岁月漫长。', s:''},
+  {t:'做喜欢的事，时间会为你让路。', s:''},
+  {t:'你眼里有光，世界就是亮的。', s:''},
+  {t:'生活的美好藏在细节里。', s:''},
+  {t:'认真生活的人，运气都不会太差。', s:''},
+  {t:'记录下来，平凡就会闪光。', s:''},
+  {t:'你喜欢的样子，就是最好的样子。', s:''},
+  {t:'好好吃饭，好好睡觉，好好爱自己。', s:''},
+  {t:'世界很大，先去看一看。', s:''},
+  {t:'保持好奇，是最好的状态。', s:''},
+  {t:'喜欢的事，值得被坚持。', s:''},
+  {t:'每天一点点小确幸。', s:''},
+  {t:'阳光会记得你的好。', s:''},
+  {t:'你值得所有美好的事发生。', s:''},
+  {t:'每一个未被记录的日子，都值得被记住。', s:''},
+  {t:'你的热爱会带你去很远的地方。', s:''},
+  {t:'把日子过成诗。', s:''},
+  {t:'温柔对待生活，生活也会温柔待你。', s:''},
+  {t:'好天气值得被记录。', s:''},
+  {t:'你今天的努力，就是明天的幸运。', s:''},
+  {t:'保持热爱，保持松弛。', s:''},
+  {t:'平凡的日子，也能闪闪发光。', s:''},
+  {t:'你的故事正在展开。', s:''},
+  {t:'好好生活，慢慢变好。', s:''},
+  {t:'岁月会善待认真生活的人。', s:''},
+  {t:'值得期待明天。', s:''},
+  {t:'一切都会好起来的。', s:''},
+  {t:'你要相信，每一天都在变好。', s:''},
+  {t:'愿你眼里有光，心中有爱。', s:''},
+  {t:'把今天过成最舒服的一天。', s:''},
+  {t:'期待下一次出发。', s:''},
+  {t:'生活值得被热爱。', s:''},
+  {t:'你的坚持终将美好。', s:''},
+  {t:'一切美好都在路上。', s:''},
+  {t:'阳光很好，出发吧。', s:''},
+  {t:'把日子过成喜欢的样子。', s:''},
+  {t:'每一个不曾起舞的日子，都是对生命的辜负。', s:'尼采《偶像的黄昏》'},
+  {t:'凡事发生必有恩典。', s:'《约伯记》'},
+  {t:'世界以痛吻我，要我报之以歌。', s:'纪伯伦《先知》'},
+  {t:'当你真心渴望某样东西时，整个宇宙都会来帮你。', s:'保罗·柯艾略《牧羊少年奇幻之旅》'},
+  {t:'不要温和地走进那个良夜。', s:'狄兰·托马斯'},
+  {t:'凡是过往，皆为序章。', s:'莎士比亚《暴风雨》'},
+  {t:'长风破浪会有时，直挂云帆济沧海。', s:'李白《行路难》'},
+  {t:'会当凌绝顶，一览众山小。', s:'杜甫《望岳》'},
+  {t:'腹有诗书气自华。', s:'苏轼《和董传留别》'},
+  {t:'问渠那得清如许，为有源头活水来。', s:'朱熹《观书有感》'},
+  {t:'路漫漫其修远兮，吾将上下而求索。', s:'屈原《离骚》'},
+  {t:'盛年不重来，一日难再晨。', s:'陶渊明《杂诗》'},
+  {t:'千里之行，始于足下。', s:'老子《道德经》'},
+  {t:'合抱之木，生于毫末；九层之台，起于累土。', s:'老子《道德经》'},
+  {t:'天下难事，必作于易；天下大事，必作于细。', s:'老子《道德经》'},
+  {t:'不积跬步，无以至千里；不积小流，无以成江海。', s:'荀子《劝学》'},
+  {t:'锲而不舍，金石可镂。', s:'荀子《劝学》'},
+  {t:'业精于勤，荒于嬉；行成于思，毁于随。', s:'韩愈《进学解》'},
+  {t:'纸上得来终觉浅，绝知此事要躬行。', s:'陆游《冬夜读书示子聿》'},
+  {t:'莫等闲，白了少年头，空悲切。', s:'岳飞《满江红》'},
+  {t:'及时当勉励，岁月不待人。', s:'陶渊明《杂诗》'},
+  {t:'生活就像一盒巧克力，你永远不知道下一颗是什么味道。', s:'《阿甘正传》'},
+  {t:'我们都在阴沟里，但仍有人仰望星空。', s:'王尔德《温夫人的扇子》'},
+  {t:'天生我材必有用，千金散尽还复来。', s:'李白《将进酒》'},
+  {t:'穷则变，变则通，通则久。', s:'《周易·系辞》'},
+  {t:'君子藏器于身，待时而动。', s:'《周易·系辞》'},
+  {t:'莫愁前路无知己，天下谁人不识君。', s:'高适《别董大》'},
+  {t:'欲穷千里目，更上一层楼。', s:'王之涣《登鹳雀楼》'},
+  {t:'山重水复疑无路，柳暗花明又一村。', s:'陆游《游山西村》'},
+  {t:'沉舟侧畔千帆过，病树前头万木春。', s:'刘禹锡《酬乐天扬州初逢席上见赠》'},
+  {t:'竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。', s:'苏轼《定风波》'},
+  {t:'回首向来萧瑟处，归去，也无风雨也无晴。', s:'苏轼《定风波》'},
+];
+function quoteToday(){
+  const n = QUOTES.length;
+  const doy = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
+  const st = D.daily_quote || {};
+  let i = (st.date === today() && st.i !== undefined) ? Number(st.i) : doy % n;
+  i = ((i % n) + n) % n;
+  return {i: i, q: QUOTES[i]};
+}
+function nextQuote(){
+  const cur = quoteToday();
+  D.daily_quote = {date: today(), i: (cur.i + 1) % QUOTES.length};
+  save(); render();
+}
+
+const HOLIDAYS = {
+  '2025-01-01':['元旦','off'],
+  '2025-01-26':['春节','work'],
+  '2025-01-28':['春节','off'],
+  '2025-01-29':['春节','off'],
+  '2025-01-30':['春节','off'],
+  '2025-01-31':['春节','off'],
+  '2025-02-01':['春节','off'],
+  '2025-02-02':['春节','off'],
+  '2025-02-03':['春节','off'],
+  '2025-02-04':['春节','off'],
+  '2025-02-08':['春节','work'],
+  '2025-04-04':['清明','off'],
+  '2025-04-05':['清明','off'],
+  '2025-04-06':['清明','off'],
+  '2025-04-27':['劳动节','work'],
+  '2025-05-01':['劳动节','off'],
+  '2025-05-02':['劳动节','off'],
+  '2025-05-03':['劳动节','off'],
+  '2025-05-04':['劳动节','off'],
+  '2025-05-05':['劳动节','off'],
+  '2025-05-31':['端午','off'],
+  '2025-06-01':['端午','off'],
+  '2025-06-02':['端午','off'],
+  '2025-09-15':['中秋','off'],
+  '2025-09-28':['国庆','work'],
+  '2025-10-01':['国庆','off'],
+  '2025-10-02':['国庆','off'],
+  '2025-10-03':['国庆','off'],
+  '2025-10-04':['国庆','off'],
+  '2025-10-05':['国庆','off'],
+  '2025-10-06':['国庆','off'],
+  '2025-10-07':['国庆','off'],
+  '2025-10-08':['国庆','off'],
+  '2025-10-11':['国庆','work'],
+  '2026-01-01':['元旦','off'],
+  '2026-01-02':['元旦','off'],
+  '2026-01-03':['元旦','off'],
+  '2026-01-04':['元旦','work'],
+  '2026-02-14':['春节','work'],
+  '2026-02-15':['春节','off'],
+  '2026-02-16':['春节','off'],
+  '2026-02-17':['春节','off'],
+  '2026-02-18':['春节','off'],
+  '2026-02-19':['春节','off'],
+  '2026-02-20':['春节','off'],
+  '2026-02-21':['春节','off'],
+  '2026-02-22':['春节','off'],
+  '2026-02-23':['春节','off'],
+  '2026-02-28':['春节','work'],
+  '2026-04-04':['清明','off'],
+  '2026-04-05':['清明','off'],
+  '2026-04-06':['清明','off'],
+  '2026-05-01':['劳动节','off'],
+  '2026-05-02':['劳动节','off'],
+  '2026-05-03':['劳动节','off'],
+  '2026-05-04':['劳动节','off'],
+  '2026-05-05':['劳动节','off'],
+  '2026-05-09':['劳动节','work'],
+  '2026-06-19':['端午','off'],
+  '2026-06-20':['端午','off'],
+  '2026-06-21':['端午','off'],
+  '2026-09-20':['国庆','work'],
+  '2026-09-25':['中秋','off'],
+  '2026-09-26':['中秋','off'],
+  '2026-09-27':['中秋','off'],
+  '2026-10-01':['国庆','off'],
+  '2026-10-02':['国庆','off'],
+  '2026-10-03':['国庆','off'],
+  '2026-10-04':['国庆','off'],
+  '2026-10-05':['国庆','off'],
+  '2026-10-06':['国庆','off'],
+  '2026-10-07':['国庆','off'],
+  '2026-10-10':['国庆','work'],
+  '2027-01-01':['元旦','off'],
+  '2027-01-02':['元旦','off'],
+  '2027-01-03':['元旦','off'],
+  '2027-01-31':['春节','work'],
+  '2027-02-05':['春节','off'],
+  '2027-02-06':['春节','off'],
+  '2027-02-07':['春节','off'],
+  '2027-02-08':['春节','off'],
+  '2027-02-09':['春节','off'],
+  '2027-02-10':['春节','off'],
+  '2027-02-11':['春节','off'],
+  '2027-02-12':['春节','off'],
+  '2027-02-13':['春节','off'],
+  '2027-02-14':['春节','work'],
+  '2027-04-03':['清明','off'],
+  '2027-04-04':['清明','off'],
+  '2027-04-05':['清明','off'],
+  '2027-05-01':['劳动节','off'],
+  '2027-05-02':['劳动节','off'],
+  '2027-05-03':['劳动节','off'],
+  '2027-05-04':['劳动节','off'],
+  '2027-05-05':['劳动节','off'],
+  '2027-05-08':['劳动节','work'],
+  '2027-06-09':['端午','off'],
+  '2027-09-15':['中秋','off'],
+  '2027-09-26':['国庆','work'],
+  '2027-10-01':['国庆','off'],
+  '2027-10-02':['国庆','off'],
+  '2027-10-03':['国庆','off'],
+  '2027-10-04':['国庆','off'],
+  '2027-10-05':['国庆','off'],
+  '2027-10-06':['国庆','off'],
+  '2027-10-07':['国庆','off'],
+  '2027-10-09':['国庆','work'],
+};
+
+function holidayToday(){
+  const h = HOLIDAYS[today()];
+  if(!h) return '';
+  return h[1] === 'off' ? `${h[0]}·法定假日 🎉` : `${h[0]}·调休上班 💼`;
+}
+
+/* ========== 页面状态 ========== */
+let tab = 'home';
+
+function go(t){ tab = t; window.scrollTo(0,0); render(); }
+
+function title(){
+  const now = new Date();
+  const map = {
+    home:['Jacqueline', `${now.getMonth()+1}月${now.getDate()}日 周${WD[wdIdx()]} · 今天也要照顾好自己 🌸`],
+    habits:['习惯打卡','连续天数会一直累计'],
+    weight:['体重与饮水','慢慢来，比昨天好一点就够'],
+    todos:['待办事项','做完一件划掉一件'],
+    me:['我的','记录 · 提醒 · 数据']
+  };
+  const [h, s] = map[tab];
+  document.getElementById('htitle').textContent = h;
+  document.getElementById('hsub').textContent = s;
+  [...document.querySelectorAll('.tabs a')].forEach(a=>{
+    a.classList.toggle('on', a.dataset.tab === tab);
+  });
+}
+
+/* ========== 通用渲染 ========== */
+function render(){
+  title();
+  const app = document.getElementById('app');
+  app.innerHTML = tab === 'home' ? viewHome()
+    : tab === 'habits' ? viewHabits()
+    : tab === 'weight' ? viewWeight()
+    : tab === 'todos' ? viewTodos()
+    : viewMe();
+}
+
+/* ---------- 今日 ---------- */
+function threeToday(){
+  const a = D.daily_three[today()] || [];
+  return [a[0]||'', a[1]||'', a[2]||''];
+}
+function todayReminders(){
+  const wd = WD[wdIdx()];
+  return (D.reminders||[]).filter(r => r.enabled !== false &&
+    (r.repeat === '每天' || (r.repeat === '仅一次' && r.date === today()) || r.repeat === '每周'+wd))
+    .sort((a,b)=>String(a.time||'').localeCompare(String(b.time||'')));
+}
+function viewHome(){
+  const t3 = threeToday();
+  const rem = todayReminders();
+  const tasks = (D.weekly_template||{})[String(wdIdx())] || [];
+  const blocks = (D.schedule_blocks||[]).filter(b=>b.label||b.time);
+  const cds = (D.countdowns||[]).map(c=>{
+    const d = new Date(c.date+'T00:00:00');
+    const days = Math.round((d - new Date(today()+'T00:00:00'))/86400000);
+    return {...c, days};
+  }).filter(c=>!isNaN(c.days)).sort((a,b)=>a.days-b.days);
+
+  return `
+  ${holidayToday() ? `<div class="card" style="border-color:var(--main)"><div class="body" style="padding:10px 14px">
+    <div style="font-size:14px">📅 ${holidayToday()}</div></div></div>` : ''}
+
+  <div class="card"><h2>📖 今日一句</h2><div class="body">
+    <div style="font-size:15px;line-height:1.75">${esc(quoteToday().q.t)}</div>
+    <div class="muted" style="margin-top:6px;text-align:right">—— ${esc(quoteToday().q.s)}</div>
+    <button class="mini" style="margin-top:10px" onclick="nextQuote()">换一句</button>
+  </div></div>
+
+  <div class="card"><h2>🎯 今日三件事</h2><div class="body">
+    ${[0,1,2].map(i=>`<div class="row">
+      <span class="muted" style="width:14px">${i+1}</span>
+      <input type="text" id="t3${i}" value="${esc(t3[i])}" placeholder="写一件今天一定要做的事"
+             onchange="saveThree()" onblur="saveThree()">
+    </div>`).join('')}
+    <div class="muted" style="margin-top:8px">改完自动保存</div>
+  </div></div>
+
+  <div class="card"><h2>⏰ 今日提醒 <span class="muted">${rem.length} 条</span></h2><div class="body">
+    ${rem.length ? rem.map(r=>`<div class="item">
+        <span class="time">${esc(r.time||'')}</span>
+        <span class="t">${esc(r.text||'')}</span>
+        <span class="tag">${esc(r.repeat||'每天').replace('每周','周')}</span>
+      </div>`).join('') : `<div class="empty">今天没有定时提醒。在电脑版「定时提醒」里添加，再导出到手机日历。</div>`}
+  </div></div>
+
+  <div class="card"><h2>📆 今天要做的（周计划）</h2><div class="body">
+    ${tasks.length ? tasks.map(t=>`<div class="item"><span class="tag">·</span><span class="t">${esc(t)}</span></div>`).join('')
+      : `<div class="empty">今天没有周计划任务。</div>`}
+  </div></div>
+
+  <div class="card"><h2>⏳ 倒计时</h2><div class="body">
+    ${cds.length ? `<div class="cd">${cds.map(c=>`<div class="pill">
+        <b>${c.days >= 0 ? c.days : '已过'}</b>
+        <span>${esc(c.name)}${c.days < 0 ? ' ' + (-c.days) + '天' : ' 天'}</span>
+      </div>`).join('')}</div>` : `<div class="empty">还没有倒计时。</div>`}
+  </div></div>
+
+  <div class="card"><h2>🕐 今日时间安排</h2><div class="body">
+    ${blocks.map(b=>`<div class="item">
+      <span class="time" style="min-width:74px">${esc(b.time||'')}</span>
+      <span class="t">${esc(b.label||'')}${b.note?`<div class="muted">${esc(b.note)}</div>`:''}</span>
+    </div>`).join('') || `<div class="empty">还没有时间安排。</div>`}
+  </div></div>`;
+}
+function saveThree(){
+  D.daily_three[today()] = [0,1,2].map(i=>{
+    const e = document.getElementById('t3'+i);
+    return e ? e.value.trim() : '';
+  });
+  save();
+}
+
+/* ---------- 打卡 ---------- */
+function streak(h){
+  let n = 0, d = new Date();
+  while(true){
+    const k = ymd(d);
+    if((D.habit_done[k]||[]).includes(h)){ n++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  return n;
+}
+function viewHabits(){
+  const done = D.habit_done[today()] || [];
+  const total = D.habits.length;
+  return `
+  <div class="card"><h2>今日打卡 <span class="muted">${done.filter(h=>D.habits.includes(h)).length}/${total}</span></h2>
+    <div class="body"><div class="grid3">
+      ${D.habits.map(h=>{
+        const on = done.includes(h);
+        return `<div class="habit ${on?'on':''}" onclick="toggleHabit('${esc(h).replace(/'/g,'&#39;')}')">
+          <div class="mk">${on?'✓':'○'}</div>
+          <div class="nm">${esc(h)}</div>
+          <div class="st">连续 ${streak(h)} 天</div>
+        </div>`;
+      }).join('')}
+    </div></div>
+  </div>
+  <div class="card"><h2>最近 14 天</h2><div class="body">
+    ${heat14(total)}
+    <div class="muted" style="margin-top:8px">颜色越深，当天完成的习惯越多</div>
+  </div></div>`;
+}
+function heat14(total){
+  const cells = [];
+  for(let i=13;i>=0;i--){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const k = ymd(d);
+    const n = (D.habit_done[k]||[]).filter(h=>D.habits.includes(h)).length;
+    const r = total ? n/total : 0;
+    const c = r === 0 ? '#F7F7F7' : r < .34 ? '#FCE4EC' : r < .67 ? '#F8BBD0' : r < 1 ? '#F06292' : '#EC407A';
+    cells.push(`<div style="text-align:center">
+      <div style="height:34px;border-radius:7px;background:${c}"></div>
+      <div class="muted" style="font-size:10px;margin-top:3px">${d.getMonth()+1}/${d.getDate()}</div>
+    </div>`);
+  }
+  return `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">${cells.join('')}</div>`;
+}
+function toggleHabit(name){
+  const k = today();
+  const arr = D.habit_done[k] || (D.habit_done[k] = []);
+  const i = arr.indexOf(name);
+  if(i >= 0) arr.splice(i,1); else arr.push(name);
+  save(); render();
+}
+
+/* ---------- 体重 ---------- */
+function viewWeight(){
+  const g = D.weight_goal || {current:65,target:55};
+  const recs = (D.weight_records||[]).slice(-14);
+  const latest = (D.weight_records||[]).length ? Number(D.weight_records[D.weight_records.length-1].weight) : Number(g.current);
+  const lost = Math.abs(Number(g.current) - latest);
+  const tot = Math.abs(Number(g.current) - Number(g.target));
+  const pct = tot > 0 ? Math.min(100, Math.max(0, Math.round(lost/tot*100))) : 0;
+  const w = D.water[today()] || 0;
+  return `
+  <div class="card"><h2>目标进度</h2><div class="body">
+    <div class="big">${latest} kg</div>
+    <div class="muted">起点 ${g.current}kg　目标 ${g.target}kg　已减 ${lost.toFixed(1)}kg</div>
+    <div class="pbar"><i style="width:${pct}%"></i></div>
+    <div class="muted">完成 ${pct}%　截止 ${esc(g.date||'')}</div>
+  </div></div>
+
+  <div class="card"><h2>记体重</h2><div class="body">
+    <div class="row">
+      <input type="number" step="0.1" id="wv" placeholder="例如 64.2" inputmode="decimal">
+      <button class="pri" onclick="addWeight()" style="flex:none">记录</button>
+    </div>
+    <div class="muted" style="margin-top:6px">今天是 ${today()}</div>
+  </div></div>
+
+  <div class="card"><h2>趋势 <span class="muted">最近 ${recs.length} 次</span></h2><div class="body">
+    ${spark(recs, g.target)}
+  </div></div>
+
+  <div class="card"><h2>今日饮水 <span class="muted">${w}/8 杯</span></h2><div class="body">
+    <div class="cups">
+      ${[...Array(8)].map((_,i)=>`<div class="cup ${i<w?'on':''}" onclick="setWater(${i+1})">${i+1}</div>`).join('')}
+    </div>
+  </div></div>
+
+  <div class="card"><h2>最近记录</h2><div class="body">
+    ${(D.weight_records||[]).slice(-10).reverse().map(r=>`<div class="item">
+      <span class="muted" style="min-width:82px">${esc(r.date)}</span>
+      <span class="t"><b>${esc(r.weight)} kg</b></span>
+      <button class="mini ghost" onclick="delWeight('${esc(r.date)}')">删</button>
+    </div>`).join('') || `<div class="empty">还没有记录。</div>`}
+  </div></div>`;
+}
+function spark(recs, target){
+  if(recs.length < 2) return `<div class="empty">至少记录 2 次后显示趋势线。</div>`;
+  const vals = recs.map(r=>Number(r.weight));
+  const all = vals.concat([Number(target)]);
+  const lo = Math.min(...all) - 1, hi = Math.max(...all) + 1;
+  const W = 320, H = 120, PL = 8, PR = 8, PT = 10, PB = 16;
+  const x = i => PL + (W-PL-PR) * i / (recs.length-1);
+  const y = v => PT + (H-PT-PB) * (1 - (v-lo)/(hi-lo));
+  const pts = vals.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const ty = y(Number(target));
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}">
+    <line x1="${PL}" y1="${ty}" x2="${W-PR}" y2="${ty}" stroke="#F48FB1" stroke-dasharray="4 4" stroke-width="1"/>
+    <polyline points="${pts}" fill="none" stroke="#EC407A" stroke-width="2.2" stroke-linejoin="round"/>
+    ${vals.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="2.6" fill="#EC407A"/>`).join('')}
+    <text x="${PL}" y="${H-4}" font-size="9" fill="#8A6D7C">${esc(recs[0].date.slice(5))}</text>
+    <text x="${W-PR-34}" y="${H-4}" font-size="9" fill="#8A6D7C">${esc(recs[recs.length-1].date.slice(5))}</text>
+  </svg>`;
+}
+function addWeight(){
+  const el = document.getElementById('wv');
+  const v = parseFloat(el.value);
+  if(!v || v < 30 || v > 150){ toast('请输入有效体重'); return; }
+  const k = today();
+  const arr = D.weight_records || (D.weight_records = []);
+  const idx = arr.findIndex(r=>r.date === k);
+  if(idx >= 0) arr[idx].weight = v; else arr.push({date:k, weight:v});
+  arr.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  save(); render(); toast('已记录 ' + v + 'kg');
+}
+function delWeight(date){
+  D.weight_records = (D.weight_records||[]).filter(r=>r.date !== date);
+  save(); render();
+}
+function setWater(n){
+  const k = today();
+  const cur = D.water[k] || 0;
+  D.water[k] = (cur === n) ? n-1 : n;
+  save(); render();
+}
+
+/* ---------- 待办 ---------- */
+function viewTodos(){
+  const todos = D.todos || [];
+  const left = todos.filter(t=>!t.done).length;
+  return `
+  <div class="card"><h2>待办 <span class="muted">剩 ${left} 项</span></h2><div class="body">
+    <div class="row">
+      <input type="text" id="ti" placeholder="要做什么？" onkeydown="if(event.key==='Enter')addTodo()">
+      <button class="pri" onclick="addTodo()" style="flex:none">加</button>
+    </div>
+  </div></div>
+  <div class="card"><h2>清单</h2><div class="body">
+    ${todos.length ? todos.map((t,i)=>`<div class="item ${t.done?'done':''}">
+      <div class="chk ${t.done?'on':''}" onclick="toggleTodo(${i})">${t.done?'✓':''}</div>
+      <span class="t" onclick="toggleTodo(${i})">${esc(t.text)}</span>
+      <button class="mini ghost" onclick="delTodo(${i})">删</button>
+    </div>`).join('') : `<div class="empty">清单是空的，加一件吧。</div>`}
+  </div></div>`;
+}
+function addTodo(){
+  const el = document.getElementById('ti');
+  const t = el.value.trim();
+  if(!t) return;
+  D.todos.push({text:t, done:false});
+  save(); render(); toast('已添加');
+}
+function toggleTodo(i){
+  D.todos[i].done = !D.todos[i].done;
+  save(); render();
+}
+function delTodo(i){
+  D.todos.splice(i,1);
+  save(); render();
+}
+
+/* ---------- 我的 ---------- */
+function viewMe(){
+  const k = today();
+  const mood = (D.moods[k]||{}).score || 0;
+  const note = D.daily_logs[k] || '';
+  const moodNote = (D.moods[k]||{}).note || '';
+  const rem = D.reminders || [];
+  return `
+  <div class="card"><h2>今天的心情</h2><div class="body">
+    <div class="row" style="justify-content:space-between">
+      ${[1,2,3,4,5].map(s=>`<button class="${mood===s?'pri':''}" style="flex:1"
+        onclick="setMood(${s})">${s}</button>`).join('')}
+    </div>
+    <input type="text" id="mn" value="${esc(moodNote)}" placeholder="一句话形容今天（可选）" style="margin-top:10px">
+    <textarea id="dl" placeholder="今天发生了什么？想到什么写什么……" style="margin-top:8px">${esc(note)}</textarea>
+    <button class="pri" onclick="saveDiary()" style="margin-top:8px;width:100%">保存今天的记录</button>
+  </div></div>
+
+  <div class="card"><h2>全部提醒 <span class="muted">${rem.length} 条</span></h2><div class="body">
+    ${rem.length ? rem.slice().sort((a,b)=>String(a.time).localeCompare(String(b.time))).map(r=>`<div class="item">
+      <span class="time">${esc(r.time||'')}</span>
+      <span class="t">${esc(r.text||'')}</span>
+      <span class="tag">${esc(r.repeat||'每天').replace('每周','周')}</span>
+    </div>`).join('') : `<div class="empty">还没有提醒。</div>`}
+    <div class="muted" style="margin-top:8px">提醒以电脑版为准；要让 iPhone 到点弹通知，用电脑版导出 .ics 加到系统日历。</div>
+  </div></div>
+
+  <div class="card"><h2>配色</h2><div class="body">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${Object.entries(THEMES).map(([k,t])=>`
+        <div style="text-align:center">
+          <div onclick="setTheme('${k}')" style="width:46px;height:46px;border-radius:12px;
+            background:${t.dot};border:2px solid ${(D.settings.theme||'sakura')===k?'#333':'transparent'}"></div>
+          <div class="muted" style="font-size:10px;margin-top:3px">${t.name}</div>
+        </div>`).join('')}
+    </div>
+  </div></div>
+
+  <div class="card"><h2>数据</h2><div class="body">
+    <div class="muted" style="margin-bottom:10px">数据只存在这台手机里，不上传。换手机或和电脑同步时用这两个按钮。</div>
+    <button onclick="exportJson()" style="width:100%">导出备份（.json）</button>
+    <input type="file" accept=".json,application/json" onchange="importJson(event)" style="display:none" id="imp">
+    <button style="width:100%;margin-top:8px" onclick="document.getElementById('imp').click()">从备份恢复</button>
+  </div></div>
+
+  <div class="card"><h2>关于</h2><div class="body">
+    <div class="muted" style="line-height:1.7">
+      Jacqueline 工作台 · 手机版<br>
+      纯离线，数据保存在本机浏览器<br>
+      和电脑版用同一套数据格式，可互相导入
+    </div>
+  </div></div>`;
+}
+let moodSel = 0;
+function setMood(s){
+  const k = today();
+  const cur = D.moods[k] || {score:0,note:''};
+  const val = cur.score === s ? 0 : s;
+  const mn = document.getElementById('mn');
+  D.moods[k] = {score:val, note: mn ? mn.value.trim() : (cur.note||'')};
+  save();
+  const btns = document.querySelectorAll('#app .card:first-child .body .row button');
+  btns.forEach((b,i)=>b.className = (i+1===val) ? 'pri' : '');
+}
+function saveDiary(){
+  const k = today();
+  const txt = document.getElementById('dl').value;
+  const mn = document.getElementById('mn').value.trim();
+  if(txt.trim()) D.daily_logs[k] = txt; else delete D.daily_logs[k];
+  const score = (D.moods[k]||{}).score || 0;
+  if(score || mn) D.moods[k] = {score, note:mn}; else delete D.moods[k];
+  save(); toast('已保存');
+}
+
+/* ---------- 导入导出 ---------- */
+function exportJson(){
+  const txt = JSON.stringify(D, null, 2);
+  const blob = new Blob([txt], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `工作台备份_${today()}.json`;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1200);
+  toast('已导出到「文件」App');
+}
+function importJson(ev){
+  const f = ev.target.files && ev.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const o = JSON.parse(r.result);
+      if(!o || typeof o !== 'object') throw new Error('格式不对');
+      if(!confirm('导入会用备份里的内容覆盖手机上的数据，继续？')) return;
+      const d = defaults();
+      for(const k in d){ if(o[k] !== undefined) d[k] = o[k]; }
+      D = d; save(); applyTheme(D.settings.theme || 'sakura'); render(); toast('已恢复');
+    }catch(e){ toast('导入失败：不是有效备份'); }
+  };
+  r.readAsText(f);
+  ev.target.value = '';
+}
+
+/* ---------- 启动 ---------- */
+document.getElementById('tabs').addEventListener('click', e=>{
+  const a = e.target.closest('a[data-tab]');
+  if(!a) return;
+  e.preventDefault();
+  go(a.dataset.tab);
+});
+load();
+applyTheme((D.settings && D.settings.theme) || 'sakura');
+render();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
