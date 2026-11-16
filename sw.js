@@ -1,5 +1,5 @@
 ﻿/* 个人工作台 手机版 - 离线缓存 */
-const CACHE = 'wb-cache-v7';
+const CACHE = 'wb-cache-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -29,6 +29,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
+  if (req.url.includes('sync.json')) return;   // 同步数据永远走网络，不缓存
 
   event.respondWith(
     caches.match(req, { ignoreSearch: true }).then(hit => {

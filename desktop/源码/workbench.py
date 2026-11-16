@@ -1378,6 +1378,7 @@ class App:
                       activebackground=C["light"], padx=14, pady=6,
                       command=lambda s=st: self.set_proj_filter(s)).pack(side="left", padx=(0, 6))
         self.primary(bar, "＋ 新增项目", self.add_project)
+        self.link(bar, "批量导入", self.import_projects)
 
         ps = self.data.get("projects", [])
         running = len([p for p in ps if p.get("status") == "进行中"])
@@ -1396,6 +1397,82 @@ class App:
     def set_proj_filter(self, st):
         self.proj_filter = st
         self.show("projects")
+
+    # ---------- 项目批量导入（粘贴 Excel） ----------
+    def import_projects(self):
+        win = tk.Toplevel(self.root)
+        win.title("批量导入项目")
+        win.configure(bg=C["card"])
+        win.geometry("640x480")
+        win.transient(self.root)
+        tk.Label(win, text="在 Excel 里选中表头和数据行，复制（Ctrl+C），粘贴到下面，点「导入」。",
+                 bg=C["card"], fg=C["text"], justify="left",
+                 font=("Microsoft YaHei", 10, "bold")).pack(anchor="w", padx=16, pady=(14, 2))
+        tk.Label(win, text="列顺序：项目名称　状态　进度%　负责人　对接人　截止　下一步　备注\n"
+                           "第一行是表头会自动识别；列不全也没关系，按顺序排即可。"
+                           "和已有项目同名的会更新，不会重复。",
+                 bg=C["card"], fg=C["muted"], justify="left",
+                 font=("Microsoft YaHei", 9)).pack(anchor="w", padx=16, pady=(0, 8))
+        txt = tk.Text(win, height=13, font=("Microsoft YaHei", 10), undo=True)
+        txt.pack(fill="both", expand=True, padx=16)
+        bar = tk.Frame(win, bg=C["card"])
+        bar.pack(fill="x", padx=16, pady=12)
+        self.primary(bar, "导入", lambda: self.do_import_projects(txt.get("1.0", "end"), win))
+        self.ghost(bar, "取消", win.destroy)
+
+    def do_import_projects(self, text, win):
+        rows = [[c.strip() for c in r.split("\t")]
+                for r in text.replace("\r", "").split("\n") if r.strip()]
+        if not rows:
+            messagebox.showinfo("批量导入", "先粘贴 Excel 内容再导入")
+            return
+        keys = ["name", "status", "progress", "owner", "contact", "due", "next", "note"]
+        words = (("name", "名称|项目"), ("status", "状态"), ("progress", "进度"),
+                 ("owner", "负责人"), ("contact", "对接人|联系"), ("due", "截止|期限"),
+                 ("next", "下一步|行动"), ("note", "备注|说明"))
+
+        def kw(col):
+            for k, ws in words:
+                if any(w in col for w in ws.split("|")):
+                    return k
+            return None
+
+        if sum(1 for c in rows[0] if kw(c)) >= 3:   # 表头至少要命中 3 个列名，避免把数据行误判
+            colmap, data_rows = [kw(c) for c in rows[0]], rows[1:]
+        else:
+            colmap, data_rows = keys, rows
+        added = updated = 0
+        ps = self.data.setdefault("projects", [])
+        byname = {p.get("name", ""): p for p in ps}
+        for r in data_rows:
+            item = {k: r[i] for i, k in enumerate(colmap) if k and i < len(r)}
+            name = item.get("name", "")
+            if not name:
+                continue
+            st = item.get("status", "")
+            st = next((s for s in ("进行中", "未开始", "已完成", "暂停") if s in st), "进行中")
+            try:
+                prog = max(0, min(100, int(float(str(item.get("progress", "0")).replace("%", "")))))
+            except Exception:
+                prog = 0
+            vals = {"status": st, "progress": prog,
+                    "owner": item.get("owner", ""), "contact": item.get("contact", ""),
+                    "due": item.get("due", ""), "next": item.get("next", ""),
+                    "note": item.get("note", "")}
+            if name in byname:
+                byname[name].update(vals)
+                updated += 1
+            else:
+                p = {"id": uuid.uuid4().hex[:8], "name": name, "todos": []}
+                p.update(vals)
+                ps.append(p)
+                byname[name] = p
+                added += 1
+        self.save()
+        self.update_proj_badge()
+        win.destroy()
+        self.show("projects")
+        messagebox.showinfo("批量导入", f"新增 {added} 个，更新 {updated} 个")
 
     def render_project(self, p):
         pid = p.get("id", "")
@@ -2534,6 +2611,13 @@ class App:
         self.link(bar, "从备份恢复", self.restore_backup)
         self.link(bar, "导出 CSV", self.export_csv)
 
+        bar2 = tk.Frame(inner, bg=C["card"]); bar2.pack(fill="x", pady=(2, 4))
+        self.primary(bar2, "推送数据到网站（手机同步）", self.push_web_data)
+        tk.Label(inner, text="推送后，手机版「我的 → 拉取电脑数据」即可拿到电脑的最新数据。\n"
+                             "注意：数据会上传到 GitHub 网页（公开网址），不要推含敏感信息的记录。",
+                 bg=C["card"], fg=C["muted"], justify="left",
+                 font=("Microsoft YaHei", 8)).pack(anchor="w", pady=2)
+
         inner2 = self.card("提醒与启动")
         r = tk.Frame(inner2, bg=C["card"]); r.pack(fill="x", pady=3)
         st = self.data.get("settings", {})
@@ -2630,6 +2714,33 @@ class App:
             messagebox.showinfo("提示", "已恢复，请重新打开程序以完全生效。")
         except Exception as e:
             messagebox.showerror("错误", str(e))
+
+    def push_web_data(self):
+        """把电脑数据推送到 GitHub 网站，手机版可一键拉取。"""
+        pub = os.path.join(BASE_DIR, "发布")
+        if not os.path.isdir(pub):
+            messagebox.showerror("推送数据", "没找到「发布」文件夹：\n" + pub)
+            return
+        try:
+            shutil.copyfile(DATA, os.path.join(pub, "sync.json"))
+        except Exception as e:
+            messagebox.showerror("推送数据", "复制数据失败：\n" + str(e))
+            return
+        import subprocess
+        try:
+            subprocess.run(["git", "add", "sync.json"], cwd=pub, timeout=60, capture_output=True)
+            subprocess.run(["git", "commit", "-m", "数据更新"], cwd=pub, timeout=60, capture_output=True)
+            r = subprocess.run(["git", "push"], cwd=pub, timeout=180, capture_output=True)
+            if r.returncode == 0:
+                messagebox.showinfo(
+                    "推送数据",
+                    "已推送到网站，约 1 分钟内生效。\n\n"
+                    "手机上：我的 → 拉取电脑数据\n"
+                    "（会用电脑数据覆盖手机数据，请先确认电脑是最新的）")
+            else:
+                messagebox.showerror("推送数据", "推送失败，网络不稳时稍后重试即可。")
+        except Exception as e:
+            messagebox.showerror("推送数据", "推送失败：\n" + str(e))
 
     def open_mobile_dir(self):
         d = os.path.join(BASE_DIR, "手机版")

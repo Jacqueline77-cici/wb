@@ -1,0 +1,211 @@
+{
+  "today_schedule": {
+    "06:30 起床": "",
+    "07:50 送孩子上幼儿园": "",
+    "09:00-12:00 工作（上午）": "",
+    "12:00-14:00 午休 / 普拉提": "",
+    "14:00-18:00 工作（下午）": "",
+    "18:30 接孩子从幼儿园": "",
+    "晚上 护肤 / 家庭时间": "",
+    "23:00 睡前准备": ""
+  },
+  "weight_goal": {
+    "current": 65,
+    "target": 55,
+    "date": "2027-01-31"
+  },
+  "weight_records": [],
+  "diet_records": [],
+  "medical_beauty": [],
+  "cpa_subjects": [
+    {
+      "name": "会计",
+      "status": "未报名",
+      "note": ""
+    },
+    {
+      "name": "审计",
+      "status": "未报名",
+      "note": ""
+    },
+    {
+      "name": "财务成本管理",
+      "status": "未报名",
+      "note": ""
+    },
+    {
+      "name": "公司战略与风险管理",
+      "status": "未报名",
+      "note": ""
+    },
+    {
+      "name": "经济法",
+      "status": "未报名",
+      "note": ""
+    },
+    {
+      "name": "税法",
+      "status": "未报名",
+      "note": ""
+    }
+  ],
+  "books": [],
+  "todos": [],
+  "habits": [
+    "普拉提",
+    "早睡",
+    "饮水",
+    "学习",
+    "少糖少碳水"
+  ],
+  "habit_done": {
+    "2026-11-15": [
+      "早睡",
+      "饮水",
+      "学习",
+      "写日记"
+    ]
+  },
+  "weekly_review": {
+    "good": "",
+    "bad": "",
+    "plan": ""
+  },
+  "monthly_goal": "",
+  "notes": "",
+  "daily_logs": {},
+  "reminders": [],
+  "settings": {
+    "autostart": false,
+    "evening_enabled": true,
+    "evening_time": "21:30",
+    "backup_keep": 30,
+    "last_evening": "",
+    "theme": "morandi_rose"
+  },
+  "schedule_blocks": [
+    {
+      "time": "06:30",
+      "label": "起床",
+      "note": ""
+    },
+    {
+      "time": "07:50",
+      "label": "送孩子上幼儿园",
+      "note": ""
+    },
+    {
+      "time": "09:00-12:00",
+      "label": "工作（上午）",
+      "note": ""
+    },
+    {
+      "time": "12:00-14:00",
+      "label": "午休 / 普拉提",
+      "note": ""
+    },
+    {
+      "time": "14:00-18:00",
+      "label": "工作（下午）",
+      "note": ""
+    },
+    {
+      "time": "18:30",
+      "label": "接孩子从幼儿园",
+      "note": ""
+    },
+    {
+      "time": "晚上",
+      "label": "护肤 / 家庭时间",
+      "note": ""
+    },
+    {
+      "time": "23:00",
+      "label": "睡前准备",
+      "note": ""
+    }
+  ],
+  "weekly_template": {
+    "0": [],
+    "1": [],
+    "2": [],
+    "3": [],
+    "4": [],
+    "5": [],
+    "6": []
+  },
+  "week_goals": {},
+  "daily_three": {},
+  "recurring_tasks": [],
+  "countdowns": [
+    {
+      "name": "减肥目标 55kg",
+      "date": "2027-01-31"
+    }
+  ],
+  "water": {},
+  "study_log": [],
+  "moods": {},
+  "materials": [],
+  "publish": {},
+  "daily_quote": {
+    "date": "2026-11-15",
+    "i": 3
+  },
+  "study_cats": [
+    "CPA专业",
+    "AI",
+    "医学健康",
+    "育儿",
+    "玄学",
+    "理财",
+    "心理成长",
+    "生活美学",
+    "其他"
+  ],
+  "study_items": [
+    {
+      "id": "cpa1",
+      "name": "会计",
+      "cat": "CPA专业",
+      "status": "想学",
+      "note": ""
+    },
+    {
+      "id": "cpa2",
+      "name": "审计",
+      "cat": "CPA专业",
+      "status": "想学",
+      "note": ""
+    },
+    {
+      "id": "cpa3",
+      "name": "财务成本管理",
+      "cat": "CPA专业",
+      "status": "想学",
+      "note": ""
+    },
+    {
+      "id": "cpa4",
+      "name": "公司战略与风险管理",
+      "cat": "CPA专业",
+      "status": "想学",
+      "note": ""
+    },
+    {
+      "id": "cpa5",
+      "name": "经济法",
+      "cat": "CPA专业",
+      "status": "想学",
+      "note": ""
+    },
+    {
+      "id": "cpa6",
+      "name": "税法",
+      "cat": "CPA专业",
+      "status": "想学",
+      "note": ""
+    }
+  ],
+  "projects": []
+}

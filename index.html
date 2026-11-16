@@ -1110,8 +1110,10 @@ function viewMe(){
   </div></div>
 
   <div class="card"><h2>数据</h2><div class="body">
-    <div class="muted" style="margin-bottom:10px">数据只存在这台手机里，不上传。换手机或和电脑同步时用这两个按钮。</div>
-    <button onclick="exportJson()" style="width:100%">导出备份（.json）</button>
+    <div class="muted" style="margin-bottom:10px">数据只存在这台手机里，不上传。</div>
+    <button onclick="pullWeb()" style="width:100%">⬇ 拉取电脑数据（覆盖手机）</button>
+    <div class="muted" style="font-size:11px;margin-top:4px">电脑端「设置 → 推送数据到网站」之后，点这里即可同步</div>
+    <button style="width:100%;margin-top:10px" onclick="exportJson()">导出备份（.json）</button>
     <input type="file" accept=".json,application/json" onchange="importJson(event)" style="display:none" id="imp">
     <button style="width:100%;margin-top:8px" onclick="document.getElementById('imp').click()">从备份恢复</button>
   </div></div>
@@ -1146,6 +1148,18 @@ function saveDiary(){
 }
 
 /* ---------- 导入导出 ---------- */
+async function pullWeb(){
+  if(!confirm('会用电脑上的最新数据覆盖手机上的全部数据，继续？\n\n（电脑端先在「设置 → 推送数据到网站」推一次）')) return;
+  try{
+    const r = await fetch('sync.json?ts=' + Date.now());
+    if(!r.ok) throw new Error(r.status);
+    const o = await r.json();
+    const d = defaults();
+    for(const k in d){ if(o[k] !== undefined) d[k] = o[k]; }
+    D = d; save(); applyTheme(D.settings.theme || 'sakura'); render();
+    toast('已同步电脑数据');
+  }catch(e){ toast('拉取失败：电脑还没推送过'); }
+}
 function exportJson(){
   const txt = JSON.stringify(D, null, 2);
   const blob = new Blob([txt], {type:'application/json'});
